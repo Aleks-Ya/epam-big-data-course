@@ -32,7 +32,7 @@ class AccessLogTask extends Serializable {
     val path = new org.apache.hadoop.fs.Path(outputFile.toURI)
     val exists = fs.exists(path)
     if (exists) {
-      fs.delete(path)
+      fs.delete(path, true)
     }
   }
 
