@@ -32,7 +32,8 @@ class AccessLogTask extends Serializable {
     val path = new org.apache.hadoop.fs.Path(outputFile.toURI)
     val exists = fs.exists(path)
     if (exists) {
-      fs.delete(path, true)
+      val deleted = fs.delete(path, true)
+      assert(deleted)
     }
   }
 
@@ -59,12 +60,12 @@ class AccessLogTask extends Serializable {
         (ip, bytes)
       })
 
-    ipBytesMap.count() //wait accumulators
-    browsers = "IE: %d\nMozilla: %d\nOthers: %d\n".format(ieAccum.value, mozillaAccum.value, otherAccum.value)
-
     val ipTotalBytesMap = ipBytesMap.reduceByKey(_ + _)
 
     val ipCountMap = sc.parallelize(ipBytesMap.countByKey().toSeq)
+
+    //should be after ipBytesMap.countByKey()
+    browsers = "IE: %d\nMozilla: %d\nOthers: %d\n".format(ieAccum.value, mozillaAccum.value, otherAccum.value)
 
     val ipAvgBytesMap = ipTotalBytesMap.join(ipCountMap)
       .map({ case (ip: String, data: Tuple2[Long, Long]) => (ip, data._1, data._1 / data._2) })
