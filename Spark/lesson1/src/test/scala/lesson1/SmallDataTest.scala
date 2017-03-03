@@ -4,13 +4,18 @@ import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers.convertToStringShouldWrapper
+import org.scalatest.BeforeAndAfterAll
 
-class AccessLogTest extends FlatSpec {
+class SmallDataTest extends FlatSpec with BeforeAndAfterAll {
 
-  "Spark in Local mode" should "works without errors" in {
-    val conf = new SparkConf().setAppName("Hello2").setMaster("local")
-    val sc = new SparkContext(conf)
+  var sc: SparkContext = null
 
+  override def beforeAll() {
+    val conf = new SparkConf().setAppName("SmallDataTest").setMaster("local")
+    sc = new SparkContext(conf)
+  }
+
+  "Process lines from the access log" should "return Top5" in {
     val source = Array(
       """ip42 - - [24/Apr/2011:06:32:37 -0400] "GET / HTTP/1.0" 200 6530 "-" "WebMoney/1.0 (AdvisorBot 0.1)/Nutch-1.2"""",
       """ip1 - - [24/Apr/2011:06:32:48 -0400] "GET /~strabal/grease/photo8/T926-8.jpg HTTP/1.1" 200 5980 "-" "Mozilla/5.0 (compatible; YandexImages/3.0; +http://yandex.com/bots)"""",
@@ -23,10 +28,10 @@ class AccessLogTest extends FlatSpec {
 
     val lines = sc.parallelize(source)
 
-    val al = new AccessLog()
+    val al = new AccessLogTask()
     al.processLines(sc, lines)
     val top5 = al.getTop5()
-    println("Top5: " + top5)
+    println("Top5:\n" + top5)
 
     val expected =
       """ip43,7859,23579
@@ -37,5 +42,9 @@ ip56,274,274
 """
     top5 shouldEqual expected
 
+  }
+
+  override def afterAll() {
+    sc.stop()
   }
 }

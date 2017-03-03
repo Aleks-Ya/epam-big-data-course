@@ -14,5 +14,10 @@ lazy val root = (project in file(".")).
 		"org.scalatest" % "scalatest_2.11" % "3.0.1" % Test
 	),
 	javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled"),
-	parallelExecution in Test := false
+	parallelExecution in Test := false,
+	mainClass in assembly := Some("lesson1.Main"),
+	assemblyJarName in assembly := "spark1.jar",
+	assemblyMergeStrategy in assembly := {
+	  case x => MergeStrategy.rename
+	}
   )
