@@ -71,9 +71,6 @@ class AccessLogTask extends Serializable {
       .map({ case (ip: String, data: Tuple2[Long, Long]) => (ip, data._1, data._1 / data._2) })
       .sortBy(f = { row => row._2 }, ascending = false)
 
-    val takeFive = ipAvgBytesMap.take(5)
-    println("takeFive " + takeFive.toSeq)
-
     top5 = ipAvgBytesMap
       .take(5)
       .map(row => {
