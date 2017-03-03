@@ -63,7 +63,6 @@ class AccessLogTask extends Serializable {
     browsers = "IE: %d\nMozilla: %d\nOthers: %d\n".format(ieAccum.value, mozillaAccum.value, otherAccum.value)
 
     val ipTotalBytesMap = ipBytesMap.reduceByKey(_ + _)
-    println("ipTotalBytesMap " + ipTotalBytesMap.collect().toSeq)
 
     val ipCountMap = sc.parallelize(ipBytesMap.countByKey().toSeq)
 
