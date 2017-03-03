@@ -32,15 +32,20 @@ class SmallDataTest extends FlatSpec with BeforeAndAfterAll {
     al.processLines(sc, lines)
     val top5 = al.getTop5()
     println("Top5:\n" + top5)
+    val browsers = al.getBrowsers
+    println("Browsers:\n" + browsers)
 
-    val expected =
+    val top5Exp =
       """ip43,7859,23579
 ip42,6530,6530
 ip1,5980,5980
 ip27,4678,4678
 ip56,274,274
 """
-    top5 shouldEqual expected
+    top5 shouldEqual top5Exp
+
+    val browsersExp = "IE: 0\nMozilla: 2\nOthers: 6\n"
+    al.getBrowsers() shouldEqual browsersExp
 
   }
 

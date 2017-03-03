@@ -10,6 +10,7 @@ import java.io._
 import java.io.Closeable
 class AccessLogTask extends Serializable {
   private var top5: String = null
+  private var browsers: String = null
 
   def processFile(sc: SparkContext, inputFile: File, outputFile: File) {
     val lines = sc.textFile(inputFile.toURI.toString)
@@ -36,14 +37,30 @@ class AccessLogTask extends Serializable {
   }
 
   def processLines(sc: SparkContext, lines: RDD[String]) = {
+    val ieAccum = sc.accumulator(0L, "IE counter")
+    val mozillaAccum = sc.accumulator(0L, "Mozilla counter")
+    val otherAccum = sc.accumulator(0L, "Other browser counter")
+
+    val browserRegex = """ "(\w+)/.*"$""".r
     val bytesRegex = """" \d{3} (\d+) """".r
     val ipBytesMap = lines.map(line =>
       {
         val ip = line.take(line.indexOf(" "))
-        val bytesOptional = bytesRegex.findFirstMatchIn(line).map(_ group 1)
-        val bytes = bytesOptional.getOrElse("0").toLong
+
+        val bytes = bytesRegex.findFirstMatchIn(line).map(_ group 1).getOrElse("0").toLong
+
+        val browser = browserRegex.findFirstMatchIn(line).map(_ group 1).getOrElse("")
+        browser match {
+          case "msie" => ieAccum += 1
+          case "Mozilla" => mozillaAccum += 1
+          case _ => otherAccum += 1
+        }
+
         (ip, bytes)
       })
+
+    ipBytesMap.count() //wait accumulators
+    browsers = "IE: %d\nMozilla: %d\nOthers: %d\n".format(ieAccum.value, mozillaAccum.value, otherAccum.value)
 
     val ipTotalBytesMap = ipBytesMap.reduceByKey(_ + _)
     println("ipTotalBytesMap " + ipTotalBytesMap.collect().toSeq)
@@ -76,4 +93,6 @@ class AccessLogTask extends Serializable {
       .toString()
 
   def getTop5() = top5
+
+  def getBrowsers() = browsers
 }

@@ -31,6 +31,9 @@ class RealDataTest extends FlatSpec with BeforeAndAfterAll {
     val top5 = al.getTop5()
     println("Top5: " + top5)
 
+    val browsersExp = "IE: 0\nMozilla: 12280\nOthers: 1221\n"
+    al.getBrowsers() shouldEqual browsersExp
+
     val size = outputFile.length()
     println("Output file size: " + size)
     assert(size == 4096L)
