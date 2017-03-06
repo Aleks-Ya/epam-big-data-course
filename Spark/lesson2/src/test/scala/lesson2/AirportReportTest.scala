@@ -25,7 +25,7 @@ class AirportReportTest extends FlatSpec with BeforeAndAfterAll {
     val result = processor.calculate
 
     result.biggestCarrier shouldEqual "Southwest Airlines Co."
-    result.busiestAirportsUsaJuneAug should contain inOrderOnly ("Perry-Warsaw", "LaGuardia")
+    result.busiestAirportsUsaJuneAug should contain inOrderOnly ("Perry-Warsaw (01G)", "Livingston Municipal (00R)", "LaGuardia (LGA)")
     result.flightsNycJune2007 shouldEqual 1
     result.flightsPerCarrierIn2007 shouldEqual 3
   }
