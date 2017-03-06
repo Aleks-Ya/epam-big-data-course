@@ -1,6 +1,6 @@
 BigData, Spark, Lesson 1
 Home work
-Iblokov Aleksei
+Iablokov Aleksei
 
 Requirements:
 1. Scala (tested on 2.12.1)
