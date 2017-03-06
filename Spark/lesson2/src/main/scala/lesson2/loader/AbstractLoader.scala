@@ -25,7 +25,9 @@ abstract class AbstractLoader(
       .option("escape", "\\")
       .load(file)
     df.registerTempTable(tableName)
-    df.cache()
+    df.cache
+    df.show
+    df
   }
 
   def airportsFile: String

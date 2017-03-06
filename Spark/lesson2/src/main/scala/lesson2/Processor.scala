@@ -38,13 +38,11 @@ class Processor(loader: Loader) {
    * 3.	Count total number of flights per carrier in 2007
    */
   def calculateFlightsPerCarrierIn2007 = {
-    sc.setJobDescription("flightCount2007")
+    sc.setJobDescription("calculateFlightsPerCarrierIn2007")
     val flightCount2007 = sql.table("flights").where("Year=2007").count()
-    sc.setJobDescription("carriersCount")
     val carriersCount = sql.table("carriers").count()
-    sc.setJobDescription("flightsPerCarrierIn2007")
     val flightsPerCarrierIn2007 = flightCount2007 / carriersCount
-    println("Flights per carrier in 2007:" + flightsPerCarrierIn2007)
+    println("flightsPerCarrierIn2007:" + flightsPerCarrierIn2007)
     flightsPerCarrierIn2007
   }
 
