@@ -4,6 +4,8 @@ import org.apache.spark.sql.DataFrame
 import lesson2.loader.Loader
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.functions._
+import java.util.NoSuchElementException
 
 class Processor(loader: Loader) {
 
@@ -102,22 +104,26 @@ class Processor(loader: Loader) {
    * 6.	Find the carrier who served the biggest number of flights
    */
   def calculateBiggestCarrier = {
-    sc.setJobDescription("biggestCarrierCode")
-    val biggestCarrierCode = sql.sql(
-      """SELECT c.Code, COUNT(c.Code) AS FlightCount 
-         FROM flights AS f JOIN carriers AS c 
-         ON f.UniqueCarrier = c.Code 
-         GROUP BY c.Code 
-         ORDER BY COUNT(c.Code) DESC
-         LIMIT 1""").head().getString(0)
-    println("The biggest carrier's code: " + biggestCarrierCode)
-    sc.setJobDescription("biggestCarrier")
-    val biggestCarrier = sql
-      .table("carriers")
-      .where(s"Code = '$biggestCarrierCode'")
-      .head().getString(1)
-    println("The biggest carrier: " + biggestCarrier)
-    biggestCarrier
+    sc.setJobDescription("calculateBiggestCarrier")
+    val biggestCarrierCodeRow = sql
+      .table("flights")
+      .groupBy("UniqueCarrier")
+      .agg(count("UniqueCarrier").alias("FlightCount"))
+      .orderBy(col("FlightCount").desc)
+      .head()
+    println("biggestCarrierCode: " + biggestCarrierCodeRow)
+    val biggestCarrierCode = biggestCarrierCodeRow.getString(0)
+
+    try {
+      val biggestCarrierName = sql
+        .table("carriers")
+        .where(s"Code = '$biggestCarrierCode'")
+        .head().getString(1)
+      println("biggestCarrierName: " + biggestCarrierName)
+      biggestCarrierName
+    } catch {
+      case e: NoSuchElementException => throw new NoSuchElementException("Carrier not found by code: " + biggestCarrierCode)
+    }
   }
 
 }
