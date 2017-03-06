@@ -3,14 +3,15 @@ package lesson2
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
+import lesson2.loader.HdfsLoader
 
 object Main {
   
   def main(args: Array[String]) {
     var sc: SparkContext = null
     try {
-      val hdfsDir = if (args.isEmpty) "hdfs://localhost:8020/tmp/iablokov/spark/lesson2" else args(0) 
-      val conf = new SparkConf().setAppName("YablokovSpark2").setMaster("local")
+      val hdfsDir = if (args.isEmpty) "hdfs://sandbox.hortonworks.com:8020/tmp/iablokov/spark/lesson2" else args(0) 
+      val conf = new SparkConf().setAppName("YablokovSpark2").setMaster("local[*]")
       sc = new SparkContext(conf)
       val sql = new SQLContext(sc)
 
