@@ -7,6 +7,8 @@ import org.scalatest.BeforeAndAfterAll
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
+import lesson2.loader.CsvResourceLoader
+
 class AirportReportTest extends FlatSpec with BeforeAndAfterAll {
   var sc: SparkContext = null
   var sql: SQLContext = null
