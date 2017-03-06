@@ -4,19 +4,21 @@ import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 
-class Main {
-  def main(args: Array[String]): Unit = {
+object Main {
+  
+  def main(args: Array[String]) {
     var sc: SparkContext = null
     try {
+      val hdfsDir = if (args.isEmpty) "hdfs://localhost:8020/tmp/iablokov/spark/lesson2" else args(0) 
       val conf = new SparkConf().setAppName("YablokovSpark2").setMaster("local")
       sc = new SparkContext(conf)
       val sql = new SQLContext(sc)
 
       val loader = new HdfsLoader(
         sql,
-        "/tmp/iablokov/spark/lesson2/airports.csv",
-        "/tmp/iablokov/spark/lesson2/carriers.csv",
-        "/tmp/iablokov/spark/lesson2/flights.csv")
+        hdfsDir + "/airports.csv",
+        hdfsDir + "/carriers.csv",
+        hdfsDir + "/2007.csv")
       val processor = new Processor(loader)
       val result = processor.calculate
 
@@ -31,4 +33,5 @@ class Main {
       }
     }
   }
+  
 }
