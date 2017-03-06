@@ -34,6 +34,7 @@ class CsvResourceLoader(
       .format("com.databricks.spark.csv")
       .option("header", "true")
       .option("inferSchema", "true")
+      .option("escape", "\\")
       .load(resourceURI.getPath.toString)
     df.show
     df

@@ -32,6 +32,7 @@ class HdfsLoader(
       .format("com.databricks.spark.csv")
       .option("header", "true")
       .option("inferSchema", "true")
+      .option("escape", "\\")
       .load(file)
   }
 }
