@@ -1,16 +1,13 @@
 package lesson1
 
+import java.io.{Serializable, _}
+
 import org.apache.spark._
 import org.apache.spark.rdd._
-import scala._
-import java.io.Serializable
-import scala.collection.mutable.StringBuilder
-import java.nio.file.Files
-import java.io._
-import java.io.Closeable
+
 class AccessLogTask extends Serializable {
-  private var top5: String = null
-  private var browsers: String = null
+  private var top5: String = _
+  private var browsers: String = _
 
   def processFile(sc: SparkContext, inputFile: File, outputFile: File) {
     val lines = sc.textFile(inputFile.toURI.toString)
@@ -37,28 +34,27 @@ class AccessLogTask extends Serializable {
     }
   }
 
-  def processLines(sc: SparkContext, lines: RDD[String]) = {
+  def processLines(sc: SparkContext, lines: RDD[String]): RDD[(String, Long, Long)] = {
     val ieAccum = sc.accumulator(0L, "IE counter")
     val mozillaAccum = sc.accumulator(0L, "Mozilla counter")
     val otherAccum = sc.accumulator(0L, "Other browser counter")
 
     val browserRegex = """ "(\w+)/.*"$""".r
     val bytesRegex = """" \d{3} (\d+) """".r
-    val ipBytesMap = lines.map(line =>
-      {
-        val ip = line.take(line.indexOf(" "))
+    val ipBytesMap = lines.map(line => {
+      val ip = line.take(line.indexOf(" "))
 
-        val bytes = bytesRegex.findFirstMatchIn(line).map(_ group 1).getOrElse("0").toLong
+      val bytes = bytesRegex.findFirstMatchIn(line).map(_ group 1).getOrElse("0").toLong
 
-        val browser = browserRegex.findFirstMatchIn(line).map(_ group 1).getOrElse("")
-        browser match {
-          case "msie" => ieAccum += 1
-          case "Mozilla" => mozillaAccum += 1
-          case _ => otherAccum += 1
-        }
+      val browser = browserRegex.findFirstMatchIn(line).map(_ group 1).getOrElse("")
+      browser match {
+        case "msie" => ieAccum += 1
+        case "Mozilla" => mozillaAccum += 1
+        case _ => otherAccum += 1
+      }
 
-        (ip, bytes)
-      })
+      (ip, bytes)
+    })
 
     val ipTotalBytesMap = ipBytesMap.reduceByKey(_ + _)
 
@@ -68,7 +64,7 @@ class AccessLogTask extends Serializable {
     browsers = "IE: %d\nMozilla: %d\nOthers: %d\n".format(ieAccum.value, mozillaAccum.value, otherAccum.value)
 
     val ipAvgBytesMap = ipTotalBytesMap.join(ipCountMap)
-      .map({ case (ip: String, data: Tuple2[Long, Long]) => (ip, data._1, data._1 / data._2) })
+      .map({ case (ip: String, data: (Long, Long)) => (ip, data._1, data._1 / data._2) })
       .sortBy(f = { row => row._2 }, ascending = false)
 
     top5 = ipAvgBytesMap
@@ -82,14 +78,10 @@ class AccessLogTask extends Serializable {
     ipAvgBytesMap
   }
 
-  def formatLine(ip: String, totalBytes: Long, avgBytes: Long) =
-    new StringBuilder()
-      .append(ip).append(",")
-      .append(avgBytes).append(",")
-      .append(totalBytes)
-      .toString()
+  private def formatLine(ip: String, totalBytes: Long, avgBytes: Long) =
+    ip + "," + avgBytes + "," + totalBytes
 
-  def getTop5() = top5
+  def getTop5: String = top5
 
-  def getBrowsers() = browsers
+  def getBrowsers: String = browsers
 }

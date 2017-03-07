@@ -1,14 +1,12 @@
 package lesson1
 
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers.convertToStringShouldWrapper
-import org.scalatest.BeforeAndAfterAll
+import org.apache.spark.{SparkConf, SparkContext}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import org.scalatest.Matchers._
 
 class SmallDataTest extends FlatSpec with BeforeAndAfterAll {
 
-  var sc: SparkContext = null
+  private var sc: SparkContext = _
 
   override def beforeAll() {
     val conf = new SparkConf().setAppName("SmallDataTest").setMaster("local")
@@ -30,7 +28,7 @@ class SmallDataTest extends FlatSpec with BeforeAndAfterAll {
 
     val al = new AccessLogTask()
     al.processLines(sc, lines)
-    val top5 = al.getTop5()
+    val top5 = al.getTop5
     println("Top5:\n" + top5)
     val browsers = al.getBrowsers
     println("Browsers:\n" + browsers)
@@ -39,7 +37,7 @@ class SmallDataTest extends FlatSpec with BeforeAndAfterAll {
     top5 shouldEqual top5Exp
 
     val browsersExp = "IE: 0\nMozilla: 2\nOthers: 6\n"
-    al.getBrowsers() shouldEqual browsersExp
+    al.getBrowsers shouldEqual browsersExp
 
   }
 
