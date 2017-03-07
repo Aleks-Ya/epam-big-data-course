@@ -1,30 +1,27 @@
 package lesson2.loader
 
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{DataFrame, SQLContext}
 
-abstract class AbstractLoader(
-    sql: SQLContext) extends Loader {
+abstract class AbstractLoader(sql: SQLContext) extends Loader {
 
-  def loadAirports = {
-    loadAndRegister(airportsFile, "airports")
+  def loadAirports: DataFrame = {
+    loadAndRegister(airportsFile)
   }
 
-  def loadCarriers = {
-    loadAndRegister(carriersFile, "carriers")
+  def loadCarriers: DataFrame = {
+    loadAndRegister(carriersFile)
   }
 
-  def loadFlights = {
-    loadAndRegister(flightsFile, "flights")
+  def loadFlights: DataFrame = {
+    loadAndRegister(flightsFile)
   }
 
-  def loadAndRegister(file: String, tableName: String) = {
+  private def loadAndRegister(file: String) = {
     val df = sql.read
       .format("com.databricks.spark.csv")
       .option("header", "true")
       .option("escape", "\\")
       .load(file)
-    df.registerTempTable(tableName)
     df.cache
     df.show
     df

@@ -1,17 +1,13 @@
 package lesson2
-import org.apache.spark.SparkConf
-import org.apache.spark.SparkContext
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers._
-import org.scalatest.BeforeAndAfterAll
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.functions._
 import lesson2.loader.CsvResourceLoader
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.SQLContext
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import org.scalatest.Matchers._
 
 class AirportReportTest extends FlatSpec with BeforeAndAfterAll {
-  var sc: SparkContext = null
-  var sql: SQLContext = null
+  var sc: SparkContext = _
+  var sql: SQLContext = _
 
   override def beforeAll {
     val conf = new SparkConf().setAppName("SmallDataTest").setMaster("local")
