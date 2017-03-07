@@ -51,12 +51,12 @@ class Processor(loader: Loader) {
    */
   def calculateFlightsNycJune2007 = {
     sc.setJobDescription("nycAirports")
-    val nycAirports = sql.table("airports").where("city='New York'")
+    val nycAirports = sql.table("airports").select("iata", "city").where("city='New York'")
     nycAirports.explain()
     nycAirports.cache()
 
     sc.setJobDescription("juneFlights")
-    val juneFlights = sql.table("flights").where("Month=6")
+    val juneFlights = sql.table("flights").select("Month", "Origin", "Dest").where("Month=6")
     juneFlights.explain()
     juneFlights.cache()
 
@@ -161,6 +161,7 @@ class Processor(loader: Loader) {
     sc.setJobDescription("calculateBiggestCarrier")
     val biggestCarrierCodeRow = sql
       .table("flights")
+      .select("UniqueCarrier")
       .groupBy("UniqueCarrier")
       .agg(count("UniqueCarrier").alias("FlightCount"))
       .orderBy(col("FlightCount").desc)
