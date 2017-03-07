@@ -146,7 +146,7 @@ class Processor(loader: Loader) {
     usaFlightsByIata.show()
 
     sc.setJobDescription("usaFlightsByAirport")
-    val usaFlightsByAirport = usaFlightsByIata.join(allUsaFlights, "iata").distinct().select("iata", "airport")
+    val usaFlightsByAirport = usaFlightsByIata.join(allUsaFlights, Seq("iata"), "left_outer").select("iata", "airport")
     usaFlightsByAirport.cache()
     usaFlightsByAirport.show()
 
