@@ -9,9 +9,7 @@ import org.apache.spark.sql.functions._
 
 class Processor(loader: Loader) {
 
-  var carriers: DataFrame = _
-  var airports: DataFrame = _
-  var flights: DataFrame = _
+  var carriers, airports, flights: DataFrame = _
   var sc: SparkContext = _
 
   def calculate: Result = {
@@ -48,17 +46,16 @@ class Processor(loader: Loader) {
     * 4.	The total number of flights served in Jun 2007 by NYC
     */
   private def calculateFlightsNycJune2007 = {
-    sc.setJobDescription("nycAirports")
+    sc.setJobDescription("calculateFlightsNycJune2007")
+
     val nycAirports = airports.select("iata", "city").where("city='New York'")
     nycAirports.explain()
     nycAirports.cache()
 
-    sc.setJobDescription("juneFlights")
     val juneFlights = flights.select("Month", "Origin", "Dest").where("Month=6")
     juneFlights.explain()
     juneFlights.cache()
 
-    sc.setJobDescription("flightsNycJune2007")
     val flightsNycJune2007 = juneFlights
       .join(nycAirports,
         juneFlights.col("Origin") === nycAirports.col("iata")
@@ -73,58 +70,29 @@ class Processor(loader: Loader) {
     * 5.	Find five most busy airports in US during Jun 01 - Aug 31 (make #4).
     */
   private def calculateBusiestAirports = {
-    val busiestAirports = calculateBusiestAirportsV2
-    println("\n5.	Find five most busy airports in US during Jun 01 - Aug 31 (make #4): " + busiestAirports + "\n")
-    busiestAirports
-  }
+    sc.setJobDescription("calculateBusiestAirports")
 
-  private def calculateBusiestAirportsV2 = {
-    sc.setJobDescription("usaAirports")
     val usaAirports = airports.select("iata", "airport", "country").where("country = 'USA'")
     usaAirports.cache()
-    usaAirports.show()
-
-    sc.setJobDescription("flights678")
     val flights678 = flights.select("Month", "Origin", "Dest").where("Month IN(6,7,8)")
     flights678.cache()
-    flights678.show()
-
-    sc.setJobDescription("flightsByOrigin")
     val flightsByOrigin = flights678.groupBy("Origin").agg(count("Origin").as("count"))
     flightsByOrigin.cache()
-    flightsByOrigin.show()
-
-    sc.setJobDescription("flightsByDest")
     val flightsByDest = flights678.groupBy("Dest").agg(count("Dest").as("count"))
     flightsByDest.cache()
-    flightsByDest.show()
-
-    sc.setJobDescription("flightFromUsa")
     val flightsFromUsa = flightsByOrigin.join(usaAirports, flightsByOrigin.col("Origin").as("airport") === usaAirports.col("iata")).select("count", "iata", "airport")
     flightsFromUsa.cache()
-    flightsFromUsa.show()
-
-    sc.setJobDescription("flightToUsa")
     val flightsToUsa = flightsByDest.join(usaAirports, flightsByDest.col("Dest").as("airport") === usaAirports.col("iata")).select("count", "iata", "airport")
     flightsToUsa.cache()
-    flightsToUsa.show()
-
-    sc.setJobDescription("allUsaflights")
     val allUsaFlights = flightsFromUsa.unionAll(flightsToUsa)
     allUsaFlights.cache()
-    allUsaFlights.show()
-
-    sc.setJobDescription("usaFlightsByIata")
     val usaFlightsByIata = allUsaFlights.groupBy("iata").agg(sum("count").as("countSum")).orderBy(col("countSum").desc).limit(5)
     usaFlightsByIata.cache()
-    usaFlightsByIata.show()
-
-    sc.setJobDescription("usaFlightsByAirport")
     val usaFlightsByAirport = usaFlightsByIata.join(allUsaFlights, Seq("iata"), "left_outer").select("iata", "airport")
     usaFlightsByAirport.cache()
-    usaFlightsByAirport.show()
-
     val busiestAirports = usaFlightsByAirport.collect.map(r => "%s (%s)".format(r.getString(1), r.getString(0))).toList
+
+    println("\n5.	Find five most busy airports in US during Jun 01 - Aug 31 (make #4): " + busiestAirports + "\n")
     busiestAirports
   }
 
