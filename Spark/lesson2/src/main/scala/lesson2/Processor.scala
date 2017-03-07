@@ -42,7 +42,7 @@ class Processor(loader: Loader) {
     val flightCount2007 = sql.table("flights").where("Year=2007").count()
     val carriersCount = sql.table("carriers").count()
     val flightsPerCarrierIn2007 = flightCount2007 / carriersCount
-    println("flightsPerCarrierIn2007: " + flightsPerCarrierIn2007)
+    println("\n3.	Count total number of flights per carrier in 2007 (make #2 screenshot): " + flightsPerCarrierIn2007 + "\n")
     flightsPerCarrierIn2007
   }
 
@@ -67,7 +67,7 @@ class Processor(loader: Loader) {
           || juneFlights.col("Dest") === nycAirports.col("iata"))
       .count()
 
-    println("flightsNycJune2007: " + flightsNycJune2007)
+    println("\n 4. The total number of flights served in Jun 2007 by NYC (#3): " + flightsNycJune2007 + "\n")
     flightsNycJune2007
   }
 
@@ -78,7 +78,7 @@ class Processor(loader: Loader) {
     //both version give the same result 
     //    val busiestAirports = calculateBusiestAirportsV1
     val busiestAirports = calculateBusiestAirportsV2
-    println("busiestAirports: " + busiestAirports)
+    println("\n5.	Find five most busy airports in US during Jun 01 - Aug 31 (make #4): " + busiestAirports + "\n")
     busiestAirports
   }
 
@@ -165,7 +165,6 @@ class Processor(loader: Loader) {
       .agg(count("UniqueCarrier").alias("FlightCount"))
       .orderBy(col("FlightCount").desc)
       .head()
-    println("biggestCarrierCode: " + biggestCarrierCodeRow)
     val biggestCarrierCode = biggestCarrierCodeRow.getString(0)
 
     try {
@@ -173,7 +172,7 @@ class Processor(loader: Loader) {
         .table("carriers")
         .where(s"Code = '$biggestCarrierCode'")
         .head().getString(1)
-      println("biggestCarrierName: " + biggestCarrierName)
+      println("\n6.	Find the carrier who served the biggest number of flights (make #5): " + biggestCarrierName + "\n")
       biggestCarrierName
     } catch {
       case e: NoSuchElementException => throw new NoSuchElementException("Carrier not found by code: " + biggestCarrierCode)
