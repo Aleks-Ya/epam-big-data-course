@@ -12,18 +12,24 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
   stream
     .map(packet => (packet.ip, packet))
     .reduceByKey((p1, p2) => new TcpPacket(p1.ip, p1.size + p2.size))
-    .updateStateByKey((newPackets, ipInfoOpt: Option[IpInfo]) => {
-      if (newPackets.nonEmpty) {
-        val ip = newPackets.head.ip
-        val settings = TrafficAnalyzerHelper.settingsByIp(ip)
-        val ipInfo = ipInfoOpt.getOrElse(IpInfoHelper.newIpInfo(settings))
-        val newIpInfo = ipInfo
-        newPackets.foreach(packet => {
-          newIpInfo.history.append(packet.size)
-          TrafficAnalyzerHelper.processThreshold(ip, settings, newIpInfo)
-          TrafficAnalyzerHelper.processLimit(ip, settings, newIpInfo)
-        })
-        Some(newIpInfo)
+    .map(pair => {
+      val ip = pair._1
+      val packet = pair._2
+      val settings = TrafficAnalyzerHelper.settingsByIp(ip)
+      (ip, (packet, settings))
+    })
+    .updateStateByKey((pairs, ipInfoOpt: Option[IpInfo]) => {
+      assert(pairs.size <= 1)
+      if (pairs.nonEmpty) {
+        val pair = pairs.head
+        val packet = pair._1
+        val settings = pair._2
+        val ip = packet.ip
+        val ipInfo = ipInfoOpt.getOrElse(IpInfoHelper.newIpInfo(ip, settings))
+        ipInfo.history.append(packet.size)
+        TrafficAnalyzerHelper.processThreshold(ip, settings, ipInfo)
+        TrafficAnalyzerHelper.processLimit(ip, settings, ipInfo)
+        Some(ipInfo)
       } else {
         ipInfoOpt
       }
