@@ -12,7 +12,7 @@ object HardcodedSettingsService extends SettingsService {
     new IpSettings(NullThresholdSettings, NullLimitSettings)
   }
 
-  override def getSettingsByIp(): Map[String, IpSettings] = {
+  override def getSettingsByIp: Map[String, IpSettings] = {
     settings.map(s => s.ip -> getSettings(s.ip)).toMap
   }
 }

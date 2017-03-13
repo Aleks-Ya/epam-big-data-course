@@ -1,7 +1,5 @@
 package lesson3.net
 
-import lesson3.hive.HardcodedHiveService.{NullLimitSettings, NullThresholdSettings}
-import lesson3.settings.IpSettings
 import org.apache.spark.api.java.StorageLevels
 import org.apache.spark.streaming.receiver.Receiver
 
@@ -9,8 +7,8 @@ class FakeReceiver(private val intervalMillis: Long = 2000L)
   extends Receiver[TcpPacket](StorageLevels.MEMORY_ONLY) {
 
   private var thread: Thread = _
-  private val packet1 = new TcpPacket("100.200.300.400", 1000, new IpSettings(NullThresholdSettings, NullLimitSettings))
-  private val packet2 = new TcpPacket("200.300.400.500", 5000, new IpSettings(NullThresholdSettings, NullLimitSettings))
+  private val packet1 = new TcpPacket("100.200.300.400", 1000)
+  private val packet2 = new TcpPacket("200.300.400.500", 5000)
 
   override def onStart() {
     thread = new Thread() {

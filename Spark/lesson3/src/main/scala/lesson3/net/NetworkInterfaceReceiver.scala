@@ -43,7 +43,7 @@ class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_
     val ep = packet.asInstanceOf[EthernetPacket]
     val srcAddr = ep.getHeader.getSrcAddr.toString
     val length = ep.length
-    new TcpPacket(srcAddr, length, null)
+    new TcpPacket(srcAddr, length)
   }
 
   override def onStop(): Unit = {
