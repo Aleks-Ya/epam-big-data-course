@@ -1,5 +1,6 @@
 package lesson3.hive
 
+import lesson3.settings.service.NullSettingsIp
 import lesson3.settings.{Category, Settings}
 
 object HardcodedHiveService extends HiveService {
@@ -13,8 +14,8 @@ object HardcodedHiveService extends HiveService {
 
   override def updateHourStatistics(): Unit = {}
 
-  object NullThresholdSettings extends Settings("null", Category.Threshold, 1000, 2) {}
+  object NullThresholdSettings extends Settings(NullSettingsIp.nullSettingsIp, Category.Threshold, 1000, 2) {}
 
-  object NullLimitSettings extends Settings("null", Category.Limit, 2000, 1) {}
+  object NullLimitSettings extends Settings(NullSettingsIp.nullSettingsIp, Category.Limit, 2000, 1) {}
 
 }

@@ -8,7 +8,7 @@ import lesson3.settings.IpSettings
 object TrafficAnalyzerHelper extends Serializable {
 
   def settingsByIp(ip: String): IpSettings = {
-    Context.settingsService.getSettings(ip)
+    Context.settingsService.getIpSettings(ip)
   }
 
   def processThreshold(ip: String, settings: IpSettings, newIpInfo: IpInfo): Unit = {

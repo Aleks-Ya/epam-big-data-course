@@ -1,18 +1,17 @@
 package lesson3.settings.service
 
 import lesson3.Context
-import lesson3.hive.HardcodedHiveService.{NullLimitSettings, NullThresholdSettings}
 import lesson3.settings.IpSettings
 
 object HardcodedSettingsService extends SettingsService {
-  private val hiveSettings = Context.hiveService
-  private val settings = hiveSettings.readSettings()
-
-  override def getSettings(ip: String): IpSettings = {
-    new IpSettings(NullThresholdSettings, NullLimitSettings)
+  private var nullSettings: IpSettings = _
+  private val ipToIpSettings: Map[String, IpSettings] = {
+    val ipToSettings = Context.hiveService.readSettings().groupBy(settings => settings.ip)
+    nullSettings = SettingsHelper.verifyNullSettings(ipToSettings.get(NullSettingsIp.nullSettingsIp))
+    ipToSettings.map(pair => (pair._1, SettingsHelper.toIpSettings(Some(pair._2), nullSettings)))
   }
 
-  override def getSettingsByIp: Map[String, IpSettings] = {
-    settings.map(s => s.ip -> getSettings(s.ip)).toMap
+  override def getIpSettings(ip: String): IpSettings = {
+    ipToIpSettings.getOrElse(ip, nullSettings)
   }
 }
