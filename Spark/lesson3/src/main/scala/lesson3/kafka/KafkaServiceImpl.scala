@@ -2,7 +2,7 @@ package lesson3.kafka
 
 import java.util.Properties
 
-import lesson3.event.Event
+import lesson3.incident.Incident
 import lesson3.properties.ApplicationProperties
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.slf4j.LoggerFactory
@@ -12,7 +12,7 @@ object KafkaServiceImpl extends KafkaService {
   private val topic = "alerts"
   private val log = LoggerFactory.getLogger(KafkaServiceImpl.getClass)
 
-  override def sendEvent(event: Event): Unit = {
+  override def sendEvent(event: Incident): Unit = {
     if (producer != null) {
       log.debug("Send event to Kafka: " + event)
       val record = new ProducerRecord[String, String](topic, event.toString)

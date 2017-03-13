@@ -1,9 +1,9 @@
-package lesson3.event
+package lesson3.incident
 
 import lesson3.ipinfo.IpInfo
 import lesson3.settings.IpSettings
 
-object EventHelper extends Serializable {
+object IncidentHelper extends Serializable {
 
   def isThresholdExceed(ipInfo: IpInfo, ipSettings: IpSettings): Boolean = {
     val threshold = ipSettings.threshold

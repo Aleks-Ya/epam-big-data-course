@@ -1,6 +1,6 @@
-package lesson3.event
+package lesson3.incident
 
-object EventType extends Enumeration {
+object IncidentType extends Enumeration {
   type EventType = Value
   val ThresholdExceed, ThresholdNorm, LimitExceed, LimitNorm = Value
 }

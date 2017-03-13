@@ -1,9 +1,9 @@
 package lesson3.kafka
 
-import lesson3.event.Event
+import lesson3.incident.Incident
 
 trait KafkaService {
   def start(): Unit
   def stop():Unit
-  def sendEvent(event: Event): Unit
+  def sendEvent(event: Incident): Unit
 }

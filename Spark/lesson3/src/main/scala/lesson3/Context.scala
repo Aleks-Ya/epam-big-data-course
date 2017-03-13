@@ -2,7 +2,7 @@ package lesson3
 
 import java.nio.file.Files
 
-import lesson3.event.service.{ConsoleEventService, EventService}
+import lesson3.incident.service.{ConsoleIncidentService, IncidentService}
 import lesson3.hive.{HardcodedHiveService, HiveService}
 import lesson3.kafka.{KafkaService, KafkaServiceImpl}
 import lesson3.net.{NetworkInterfaceReceiver, TcpPacket}
@@ -40,7 +40,7 @@ object Context {
   val receiver: Receiver[TcpPacket] = new NetworkInterfaceReceiver
 
   val kafkaService: KafkaService = KafkaServiceImpl
-  val eventService: EventService = new ConsoleEventService
+  val eventService: IncidentService = new ConsoleIncidentService
   val hiveService: HiveService = HardcodedHiveService
   val settingsService: SettingsService = HardcodedSettingsService
 }
