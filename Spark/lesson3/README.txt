@@ -19,6 +19,6 @@ Run on HDP:
 	1.2. carriers.csv from http://stat-computing.org/dataexpo/2009/carriers.csv
 	1.3. 2007.csv (upack) from http://stat-computing.org/dataexpo/2009/2007.csv.bz2
 2. Put the data files into HDFS in directory /tmp/iablokov/spark/lesson2
-3. Build iablokov_spark_2.jar: sbt assembly
-4. copy target\scala-2.11\iablokov_spark_2.jar to HDP
-5. Submit Spark application: spark-submit --class lesson2.Main iablokov_spark_2.jar hdfs://sandbox.hortonworks.com:8020/tmp/iablokov/spark/lesson2 
+3. Build iablokov_spark_3.jar: sbt assembly
+4. copy target\scala-2.11\iablokov_spark_3.jar to HDP
+5. Submit Spark application: spark-submit --class lesson2.Main iablokov_spark_3.jar
