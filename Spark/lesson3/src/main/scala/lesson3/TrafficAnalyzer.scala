@@ -6,8 +6,7 @@ import lesson3.event.EventHelper
 import lesson3.net.TcpPacket
 import org.apache.spark.streaming.dstream.DStream
 
-class TrafficAnalyzer(
-                       private val stream: DStream[TcpPacket])
+class TrafficAnalyzer(private val stream: DStream[TcpPacket])
   extends Serializable {
 
   stream
@@ -22,6 +21,7 @@ class TrafficAnalyzer(
         newPackets.foreach(packet => {
           newIpInfo.history.append(packet.size)
           EventHelper.checkThreshold(ip, newIpInfo, settings)
+          EventHelper.checkLimit(ip, newIpInfo, settings)
         })
         Some(newIpInfo)
       } else {
