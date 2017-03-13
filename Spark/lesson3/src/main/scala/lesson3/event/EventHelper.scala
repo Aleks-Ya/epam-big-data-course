@@ -1,6 +1,6 @@
 package lesson3.event
 
-import lesson3.IpInfo
+import lesson3.ipinfo.IpInfo
 import lesson3.settings.IpSettings
 
 object EventHelper extends Serializable {

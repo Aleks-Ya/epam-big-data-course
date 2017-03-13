@@ -1,8 +1,10 @@
-package lesson3
+package lesson3.spark
 
 import java.io.Serializable
 
+import lesson3.Context
 import lesson3.event.{EventHelper, EventImpl, EventType}
+import lesson3.ipinfo.{IpInfo, IpInfoHelper}
 import lesson3.net.TcpPacket
 import lesson3.settings.IpSettings
 import org.apache.spark.streaming.dstream.DStream

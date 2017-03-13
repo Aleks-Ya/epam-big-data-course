@@ -1,4 +1,4 @@
-package lesson3
+package lesson3.ipinfo
 
 import lesson3.net.TcpPacket
 import lesson3.settings.IpSettings

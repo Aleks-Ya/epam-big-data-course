@@ -1,7 +1,7 @@
-package lesson3
+package lesson3.ipinfo
 
 import scala.collection._
-import mutable.ListBuffer
+import scala.collection.mutable.ListBuffer
 
 //TODO use Long as index
 class SizeBoundedList[A](max: Long) extends Traversable[A] with Serializable {

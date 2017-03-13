@@ -1,4 +1,4 @@
-package lesson3
+package lesson3.ipinfo
 
 class IpInfo(var history: SizeBoundedList[Long],
              var historyThresholdSum: Long,
