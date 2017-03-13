@@ -17,7 +17,16 @@ class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_
 
   override def onStart() {
     log.debug("Starting " + getClass.getSimpleName)
-    val callables = Pcaps.findAllDevs.asScala
+
+    val nifs = Pcaps.findAllDevs.asScala
+
+    val myIps = nifs
+      .flatMap(nif => nif.getAddresses.asScala)
+      .map(address => address.getAddress.getHostAddress)
+      .reduce(_ + ", " + _)
+    log.info("This PC's IPs: " + myIps)
+
+    val callables = nifs
       .map(nif => new PcapHandle.Builder(nif.getName).build())
       .map(handle => {
         handle.setFilter(tcpFilter, BpfProgram.BpfCompileMode.OPTIMIZE)
