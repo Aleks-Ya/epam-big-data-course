@@ -8,6 +8,7 @@ Requirements:
 3. SBT (tested on 0.13.13) with access to Internet for downloading
 
 1. Run once with Admin privileges to turn network cards to promiscuous mode
+2. MySQL for Hive metastore
 
 Run on Spark local:
 sbt test

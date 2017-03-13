@@ -1,4 +1,4 @@
-package lesson3
+package lesson3.net
 
 import java.util.concurrent.{Callable, ExecutorService, Executors}
 
@@ -13,7 +13,7 @@ class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_
   private val tcpFilter = "tcp"
   private var pool: ExecutorService = _
 
-  def onStart() {
+  override def onStart() {
     val callables = Pcaps.findAllDevs.asScala
       .map(nif => new PcapHandle.Builder(nif.getName).build())
       .map(handle => {
@@ -43,10 +43,10 @@ class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_
     val ep = packet.asInstanceOf[EthernetPacket]
     val srcAddr = ep.getHeader.getSrcAddr.toString
     val length = ep.length
-    new TcpPacket(srcAddr, length)
+    new TcpPacket(srcAddr, length, null)
   }
 
-  def onStop(): Unit = {
+  override def onStop(): Unit = {
     if (pool != null) pool.shutdownNow()
   }
 }
