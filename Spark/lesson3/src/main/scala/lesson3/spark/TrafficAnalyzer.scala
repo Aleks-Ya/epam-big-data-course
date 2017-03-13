@@ -18,7 +18,7 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
     .updateStateByKey((newPackets, ipInfoOpt: Option[IpInfo]) => {
       if (newPackets.nonEmpty) {
         val ip = newPackets.head.ip
-        val settings = newPackets.head.settings
+        val settings = TrafficAnalyzerHelper.settingsByIp(ip)
         val ipInfo = ipInfoOpt.getOrElse(IpInfoHelper.newIpInfo(settings))
         val newIpInfo = ipInfo
         newPackets.foreach(packet => {

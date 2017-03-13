@@ -4,7 +4,7 @@ import lesson3.Context
 import lesson3.hive.HardcodedHiveService.{NullLimitSettings, NullThresholdSettings}
 import lesson3.settings.IpSettings
 
-class HardcodedSettingsService extends SettingsService {
+object HardcodedSettingsService extends SettingsService {
   private val hiveSettings = Context.hiveService
   private val settings = hiveSettings.readSettings()
 

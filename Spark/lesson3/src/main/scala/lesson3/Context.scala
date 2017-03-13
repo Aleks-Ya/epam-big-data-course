@@ -6,6 +6,7 @@ import lesson3.event.service.{ConsoleEventService, EventService}
 import lesson3.hive.{HardcodedHiveService, HiveService}
 import lesson3.kafka.{KafkaService, KafkaServiceImpl}
 import lesson3.net.{FakeReceiver, TcpPacket}
+import lesson3.settings.service.{HardcodedSettingsService, SettingsService}
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.apache.spark.{SparkConf, SparkContext}
@@ -41,4 +42,5 @@ object Context {
   val kafkaService: KafkaService = KafkaServiceImpl
   val eventService: EventService = new ConsoleEventService
   val hiveService: HiveService = HardcodedHiveService
+  val settingsService: SettingsService = HardcodedSettingsService
 }

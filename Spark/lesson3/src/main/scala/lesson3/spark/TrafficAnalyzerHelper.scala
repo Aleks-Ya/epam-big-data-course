@@ -6,6 +6,11 @@ import lesson3.ipinfo.IpInfo
 import lesson3.settings.IpSettings
 
 object TrafficAnalyzerHelper extends Serializable {
+
+  def settingsByIp(ip: String): IpSettings = {
+    Context.settingsService.getSettings(ip)
+  }
+
   def processThreshold(ip: String, settings: IpSettings, newIpInfo: IpInfo): Unit = {
     val isThresholdExceed = EventHelper.isThresholdExceed(newIpInfo, settings)
     if (isThresholdExceed) {
