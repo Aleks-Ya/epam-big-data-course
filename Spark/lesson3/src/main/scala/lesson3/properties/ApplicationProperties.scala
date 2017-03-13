@@ -16,11 +16,11 @@ object ApplicationProperties {
   }
   properties.load(new InputStreamReader(is))
 
-  private val bootstrapServersName = "bootstrap.servers"
+  private val kafkaServerNames = "kafka.bootstrap.servers"
 
   def kafkaBootstrapServers: String = {
-    val p = properties.getProperty(bootstrapServersName)
-    log.debug("Property {}={}", Seq(bootstrapServersName, p))
+    val p = properties.getProperty(kafkaServerNames)
+    log.debug("Property {}={}", Seq(kafkaServerNames, p))
     p
   }
 }
