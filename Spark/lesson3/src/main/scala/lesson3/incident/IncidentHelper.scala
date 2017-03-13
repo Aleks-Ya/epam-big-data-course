@@ -57,7 +57,7 @@ object IncidentHelper extends Serializable {
                   threshold: Double,
                   period: Long): Incident = {
     val uuid = UUID.randomUUID().toString
-    val timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_INSTANT)
+    val timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
     new Incident(uuid, timestamp, ip, incidentType, factValue, threshold, period)
   }
 }
