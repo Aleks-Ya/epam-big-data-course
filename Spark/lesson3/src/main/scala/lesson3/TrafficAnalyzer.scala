@@ -10,7 +10,6 @@ class TrafficAnalyzer(
                        private val stream: DStream[TcpPacket])
   extends Serializable {
 
-
   stream
     .map(packet => (packet.ip, packet))
     .reduceByKey((p1, p2) => new TcpPacket(p1.ip, p1.size + p2.size, p1.settings))

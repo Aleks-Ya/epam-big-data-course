@@ -1,11 +1,9 @@
 package lesson3.event
 
-import lesson3.IpInfo
-import lesson3.event.service.ConsoleEventService
 import lesson3.settings.IpSettings
+import lesson3.{Context, IpInfo}
 
 object EventHelper extends Serializable {
-  private val service = new ConsoleEventService
 
   def checkThreshold(ip: String, ipInfo: IpInfo, ipSettings: IpSettings): Unit = {
     val threshold = ipSettings.threshold
@@ -15,7 +13,7 @@ object EventHelper extends Serializable {
       val actualValue = thresholdSum / period
       if (actualValue > threshold.value) {
         val event = new EventImpl(ip, EventType.LimitExceed)
-        service.sendKafkaEvent(event)
+        Context.kafkaService.sendEvent(event)
       }
     }
   }

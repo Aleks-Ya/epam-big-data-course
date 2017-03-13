@@ -2,17 +2,21 @@ package lesson3
 
 import java.nio.file.Files
 
+import lesson3.kafka.{ConsoleKafkaService, KafkaService, KafkaServiceImpl}
 import lesson3.net.{FakeReceiver, NetworkInterfaceReceiver}
 import lesson3.settings.service.HardcodeSettingsService
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.slf4j.LoggerFactory
 
 object MainLocal {
+  private val log = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]) {
     var sc: SparkContext = null
     var ssc: StreamingContext = null
+    val kafkaService: KafkaService = Context.kafkaService
     try {
       //      val hdfsDir = if (args.isEmpty) "hdfs://sandbox.hortonworks.com:8020/tmp/iablokov/spark/lesson2" else args(0)
       val conf = new SparkConf().setAppName("YablokovSpark3").setMaster("local[2]")
@@ -30,6 +34,7 @@ object MainLocal {
       sc = ssc.sparkContext
       ssc.checkpoint(Files.createTempDirectory("checkpoint_").toString)
       val stream = ssc.receiverStream(new FakeReceiver(2000))
+      kafkaService.start()
       new TrafficAnalyzer(stream)
 
       ssc.start()
@@ -40,8 +45,19 @@ object MainLocal {
 
 
     } finally {
-      if (ssc != null) {
-        ssc.stop()
+      try {
+        if (ssc != null) {
+          ssc.stop()
+        }
+      } catch {
+        case e: Exception => log.error(e.getMessage, e)
+      }
+      try {
+        if (kafkaService != null) {
+          kafkaService.stop()
+        }
+      } catch {
+        case e: Exception => log.error(e.getMessage, e)
       }
     }
   }

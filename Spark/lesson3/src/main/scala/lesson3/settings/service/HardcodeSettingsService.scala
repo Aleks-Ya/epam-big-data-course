@@ -22,5 +22,5 @@ class HardcodeSettingsService extends SettingsService {
   }
 }
 
-object NullThresholdSettings extends Settings("null", Category.Threshold, 0, 0) {}
-object NullLimitSettings extends Settings("null", Category.Limit, 0, 0) {}
+object NullThresholdSettings extends Settings("null", Category.Threshold, 1000, 2) {}
+object NullLimitSettings extends Settings("null", Category.Limit, 2000, 1) {}
