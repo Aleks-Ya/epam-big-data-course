@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-import lesson3.ipinfo.IpInfo
+import lesson3.ipinfo.{IpInfo, IpInfoCalculator}
 import lesson3.settings.IpSettings
 
 object IncidentHelper extends Serializable {
@@ -15,8 +15,7 @@ object IncidentHelper extends Serializable {
     if (period <= 0) {
       throw new IllegalArgumentException("Threshold is incorrect: " + ipSettings)
     }
-    val thresholdSum = ipInfo.history.take(period.toInt).sum
-    val factValue = thresholdSum / period
+    val factValue = IpInfoCalculator.calculateDownloadRate(ipInfo, period)
     if (factValue > threshold.value) {
       if (!ipInfo.thresholdExceed) {
         val incident = newIncident(ip, IncidentType.ThresholdExceed, factValue, threshold.value, period)
@@ -37,8 +36,7 @@ object IncidentHelper extends Serializable {
     if (period <= 0) {
       throw new IllegalArgumentException("limit is incorrect: " + ipSettings)
     }
-    val limitSum = ipInfo.history.take(period.toInt).sum
-    val factValue = limitSum / period
+    val factValue = IpInfoCalculator.calculateDownloadedTotal(ipInfo, period)
     if (factValue > limit.value) {
       if (!ipInfo.limitExceed) {
         val incident = newIncident(ip, IncidentType.LimitExceed, factValue, limit.value, period)
