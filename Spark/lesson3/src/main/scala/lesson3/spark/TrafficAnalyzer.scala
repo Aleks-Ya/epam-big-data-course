@@ -23,8 +23,8 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
         val newIpInfo = ipInfo
         newPackets.foreach(packet => {
           newIpInfo.history.append(packet.size)
-          processThreshold(ip, settings, newIpInfo)
-          processLimit(ip, settings, newIpInfo)
+          TrafficAnalyzerHelper.processThreshold(ip, settings, newIpInfo)
+          TrafficAnalyzerHelper.processLimit(ip, settings, newIpInfo)
         })
         Some(newIpInfo)
       } else {
@@ -32,40 +32,6 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
       }
     })
     .print()
-
-  private def processThreshold(ip: String, settings: IpSettings, newIpInfo: IpInfo) = {
-    val isThresholdExceed = EventHelper.isThresholdExceed(newIpInfo, settings)
-    if (isThresholdExceed) {
-      if (!newIpInfo.thresholdExceed) {
-        val event = new EventImpl(ip, EventType.ThresholdExceed)
-        Context.kafkaService.sendEvent(event)
-        newIpInfo.thresholdExceed = true
-      }
-    } else {
-      if (newIpInfo.thresholdExceed) {
-        val event = new EventImpl(ip, EventType.ThresholdNorm)
-        Context.kafkaService.sendEvent(event)
-        newIpInfo.thresholdExceed = false
-      }
-    }
-  }
-
-  private def processLimit(ip: String, settings: IpSettings, newIpInfo: IpInfo) = {
-    val isLimitExceed = EventHelper.isLimitExceed(newIpInfo, settings)
-    if (isLimitExceed) {
-      if (!newIpInfo.limitExceed) {
-        val event = new EventImpl(ip, EventType.LimitExceed)
-        Context.kafkaService.sendEvent(event)
-        newIpInfo.limitExceed = true
-      }
-    } else {
-      if (newIpInfo.thresholdExceed) {
-        val event = new EventImpl(ip, EventType.LimitExceed)
-        Context.kafkaService.sendEvent(event)
-        newIpInfo.limitExceed = false
-      }
-    }
-  }
 }
 
 
