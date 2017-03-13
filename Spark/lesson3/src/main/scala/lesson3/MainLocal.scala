@@ -4,7 +4,7 @@ import java.nio.file.Files
 
 import lesson3.kafka.{ConsoleKafkaService, KafkaService, KafkaServiceImpl}
 import lesson3.net.{FakeReceiver, NetworkInterfaceReceiver}
-import lesson3.settings.service.HardcodeSettingsService
+import lesson3.settings.service.HardcodedSettingsService
 import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.streaming.{Seconds, StreamingContext}

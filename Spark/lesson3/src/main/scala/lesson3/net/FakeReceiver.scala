@@ -1,7 +1,7 @@
 package lesson3.net
 
+import lesson3.hive.HardcodedHiveService.{NullLimitSettings, NullThresholdSettings}
 import lesson3.settings.IpSettings
-import lesson3.settings.service.{NullLimitSettings, NullThresholdSettings}
 import org.apache.spark.api.java.StorageLevels
 import org.apache.spark.streaming.receiver.Receiver
 
