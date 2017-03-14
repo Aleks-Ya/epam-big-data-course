@@ -18,9 +18,12 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
       val ip = pair._1
       val packet = pair._2
       val settings = TrafficAnalyzerHelper.settingsByIp(ip)
-      (ip, (packet, settings))
+      val tuple = (ip, (packet, settings))
+      TrafficAnalyzerHelper.logInfo("Tuple created: " + tuple)
+      tuple
     })
     .updateStateByKey((pairs, ipInfoOpt: Option[IpInfo]) => {
+      TrafficAnalyzerHelper.logInfo("Process pairs: " + pairs)
       assert(pairs.size <= 1)
       var ipInfo: IpInfo = null
       if (pairs.nonEmpty) {
@@ -39,7 +42,7 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
       if (ipInfo.history.sum > 0) {
         Some(ipInfo)
       } else {
-        TrafficAnalyzerHelper.logDebug("Remove state: " + ipInfo)
+        TrafficAnalyzerHelper.logInfo("Remove state: " + ipInfo)
         None
       }
     })

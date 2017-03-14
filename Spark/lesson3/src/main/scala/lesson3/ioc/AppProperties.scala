@@ -16,6 +16,7 @@ object AppProperties {
     throw new ExceptionInInitializerError("Resource not found: " + propFile)
   }
   properties.load(new InputStreamReader(is))
+  log.info(s"All properties:\n$properties\n")
 
   def sparkAppName: String = {
     prop("spark.app.name")
@@ -50,7 +51,9 @@ object AppProperties {
   }
 
   def checkpointDirectory: String = {
-    Files.createTempDirectory("checkpoint_").toString
+    val dir = Files.createTempDirectory("checkpoint_").toString
+    log.info(s"Checkpoint directory: $dir")
+    dir
   }
 
   private def prop(propertyName: String) = {

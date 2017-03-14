@@ -10,15 +10,19 @@ object Main {
   private val log = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]) {
-    val ssc: StreamingContext = AppContext.streamingContext
-    val kafkaService: KafkaService = AppContext.kafkaService
+    var ssc: StreamingContext = null
+    var kafkaService: KafkaService = null
     try {
+      ssc = AppContext.streamingContext
+      kafkaService = AppContext.kafkaService
       val receiver = AppContext.receiver
       val stream = ssc.receiverStream(receiver)
       new TrafficAnalyzer(stream)
       kafkaService.start()
       ssc.start()
       ssc.awaitTermination()
+    } catch {
+      case e: Exception => log.error(e.getMessage, e)
     } finally {
       try {
         if (ssc != null) {

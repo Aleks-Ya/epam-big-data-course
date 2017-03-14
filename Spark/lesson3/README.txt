@@ -21,4 +21,6 @@ Run on HDP:
 2. Put the data files into HDFS in directory /tmp/iablokov/spark/lesson2
 3. Build iablokov_spark_3.jar: sbt assembly
 4. copy target\scala-2.11\iablokov_spark_3.jar to HDP
-5. Submit Spark application: spark-submit --class lesson2.Main iablokov_spark_3.jar
+5. Submit Spark application: spark-submit iablokov_spark_3.jar
+
+Linux install: yum install libcap-devel

@@ -15,22 +15,30 @@ object AppContext {
   private val log = LoggerFactory.getLogger(getClass)
 
   val sparkContext: SparkContext = {
+    log.debug("Starting SparkContext")
     val conf = new SparkConf()
       .setAppName(AppProperties.sparkAppName)
       .setMaster(AppProperties.sparkMaster)
-    new SparkContext(conf)
+    val sc = new SparkContext(conf)
+    log.info("SparkContext started")
+    sc
   }
 
   val streamingContext: StreamingContext = {
+    log.debug("Starting StreamingContext")
     val batchDuration = Seconds(1)
     val ssc = new StreamingContext(sparkContext, batchDuration)
     ssc.checkpoint(AppProperties.checkpointDirectory)
+    log.info("SparkContext started")
     ssc
   }
 
   val hiveContext: HiveContext = {
+    log.debug("Starting HiveContext")
     try {
-      new HiveContext(sparkContext)
+      val hc = new HiveContext(sparkContext)
+      log.info("HiveContext started")
+      hc
     } catch {
       case e: Exception => log.error("Hive context isn't initialized", e)
         null

@@ -14,6 +14,7 @@ object TrafficAnalyzerHelper extends Serializable {
   }
 
   def processThreshold(ip: String, settings: IpSettings, ipInfo: IpInfo): Unit = {
+    log.info(s"Process threshold: $ip, $settings, $ipInfo")
     val incidentOpt = IncidentHelper.createThresholdExceedIncident(ip, ipInfo, settings)
     if (incidentOpt.nonEmpty) {
       AppContext.kafkaService.sendEvent(incidentOpt.get)
@@ -22,6 +23,7 @@ object TrafficAnalyzerHelper extends Serializable {
   }
 
   def processLimit(ip: String, settings: IpSettings, ipInfo: IpInfo): Unit = {
+    log.info(s"Process limit: $ip, $settings, $ipInfo")
     val incidentOpt = IncidentHelper.createLimitExceedIncident(ip, ipInfo, settings)
     if (incidentOpt.nonEmpty) {
       AppContext.kafkaService.sendEvent(incidentOpt.get)
@@ -30,15 +32,21 @@ object TrafficAnalyzerHelper extends Serializable {
   }
 
   def processHourStatistics(ip: String, ipInfo: IpInfo): Unit = {
+    log.info(s"Process statistics: $ip, $ipInfo")
     val statistics = IncidentHelper.newIpStatistics(ip, ipInfo)
     AppContext.hiveService.updateHourStatistics(statistics)
   }
 
   def writeToHive(statistics: IpStatistics): Unit = {
+    log.info(s"Write to Hive: $statistics")
     AppContext.hiveService.updateHourStatistics(statistics)
   }
 
   def logDebug(message: String): Unit = {
     log.debug(message)
+  }
+
+  def logInfo(message: String): Unit = {
+    log.info(message)
   }
 }
