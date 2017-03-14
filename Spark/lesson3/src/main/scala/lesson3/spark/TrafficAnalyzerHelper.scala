@@ -13,20 +13,25 @@ object TrafficAnalyzerHelper extends Serializable {
     Context.settingsService.getIpSettings(ip)
   }
 
-  def processThreshold(ip: String, settings: IpSettings, newIpInfo: IpInfo): Unit = {
-    val incidentOpt = IncidentHelper.isThresholdExceed(ip, newIpInfo, settings)
+  def processThreshold(ip: String, settings: IpSettings, ipInfo: IpInfo): Unit = {
+    val incidentOpt = IncidentHelper.createThresholdExceedIncident(ip, ipInfo, settings)
     if (incidentOpt.nonEmpty) {
       Context.kafkaService.sendEvent(incidentOpt.get)
-      newIpInfo.thresholdExceed = true
+      ipInfo.thresholdExceed = true
     }
   }
 
-  def processLimit(ip: String, settings: IpSettings, newIpInfo: IpInfo): Unit = {
-    val incidentOpt = IncidentHelper.isLimitExceed(ip, newIpInfo, settings)
+  def processLimit(ip: String, settings: IpSettings, ipInfo: IpInfo): Unit = {
+    val incidentOpt = IncidentHelper.createLimitExceedIncident(ip, ipInfo, settings)
     if (incidentOpt.nonEmpty) {
       Context.kafkaService.sendEvent(incidentOpt.get)
-      newIpInfo.limitExceed = true
+      ipInfo.limitExceed = true
     }
+  }
+
+  def processHourStatistics(ip: String, ipInfo: IpInfo): Unit = {
+    val statistics = IncidentHelper.newIpStatistics(ip, ipInfo)
+    Context.hiveService.updateHourStatistics(statistics)
   }
 
   def logDebug(message: String): Unit = {

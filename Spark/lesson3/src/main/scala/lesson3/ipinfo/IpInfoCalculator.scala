@@ -14,7 +14,7 @@ object IpInfoCalculator extends Serializable {
     * Downloaded total (MB for N last seconds).
     * Used for limit.
     */
-  def calculateDownloadedTotal(ipInfo: IpInfo, period: Long): Double = {
+  def calculateDownloadedTotal(ipInfo: IpInfo, period: Long): Long = {
     val thresholdSum = ipInfo.history.take(period.toInt).sum
     thresholdSum / period
   }
@@ -23,7 +23,7 @@ object IpInfoCalculator extends Serializable {
     * Downloaded total for 1 last hour (MB).
     * Used for traffic consumed.
     */
-  def calculateDownloadedHour(ipInfo: IpInfo): Double = {
+  def calculateDownloadedHour(ipInfo: IpInfo): Long = {
     calculateDownloadedTotal(ipInfo, 60 * 60)
   }
 

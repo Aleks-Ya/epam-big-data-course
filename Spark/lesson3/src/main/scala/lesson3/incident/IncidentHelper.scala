@@ -4,12 +4,12 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-import lesson3.ipinfo.{IpInfo, IpInfoCalculator}
+import lesson3.ipinfo.{IpInfo, IpInfoCalculator, IpStatistics}
 import lesson3.settings.IpSettings
 
 object IncidentHelper extends Serializable {
 
-  def isThresholdExceed(ip: String, ipInfo: IpInfo, ipSettings: IpSettings): Option[Incident] = {
+  def createThresholdExceedIncident(ip: String, ipInfo: IpInfo, ipSettings: IpSettings): Option[Incident] = {
     val threshold = ipSettings.threshold
     val period = threshold.period
     if (period <= 0) {
@@ -30,7 +30,7 @@ object IncidentHelper extends Serializable {
     None
   }
 
-  def isLimitExceed(ip: String, ipInfo: IpInfo, ipSettings: IpSettings): Option[Incident] = {
+  def createLimitExceedIncident(ip: String, ipInfo: IpInfo, ipSettings: IpSettings): Option[Incident] = {
     val limit = ipSettings.limit
     val period = limit.period
     if (period <= 0) {
@@ -59,5 +59,13 @@ object IncidentHelper extends Serializable {
     val uuid = UUID.randomUUID().toString
     val timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
     new Incident(uuid, timestamp, ip, incidentType, factValue, threshold, period)
+  }
+
+  def newIpStatistics(ip: String,
+                      ipInfo: IpInfo): IpStatistics = {
+    val timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    val trafficConsumed = IpInfoCalculator.calculateDownloadedHour(ipInfo)
+    val averageSpeed = IpInfoCalculator.calculateDownloadRateHour(ipInfo)
+    new IpStatistics(timestamp, ip, trafficConsumed, averageSpeed)
   }
 }

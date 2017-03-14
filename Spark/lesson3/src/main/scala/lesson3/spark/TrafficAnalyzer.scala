@@ -30,6 +30,7 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
         newIpInfo.history.append(packet.size)
         TrafficAnalyzerHelper.processThreshold(ip, settings, newIpInfo)
         TrafficAnalyzerHelper.processLimit(ip, settings, newIpInfo)
+        TrafficAnalyzerHelper.processHourStatistics(ip, newIpInfo)
       } else {
         newIpInfo = ipInfoOpt.get
         newIpInfo.history.append(0)
