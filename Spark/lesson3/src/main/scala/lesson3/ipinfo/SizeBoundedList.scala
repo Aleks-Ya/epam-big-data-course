@@ -17,6 +17,6 @@ class SizeBoundedList[A](max: Long) extends Traversable[A] with Serializable {
 
   def apply(index: Long): A = list(index.toInt)
 
-  def foreach[U](f: A => U) = list.foreach(f)
+  def foreach[U](f: A => U): Unit = list.foreach(f)
 
 }

@@ -8,7 +8,7 @@ import scala.math.max
 object IpInfoHelper extends Serializable {
   def newIpInfo(ip:String, settings: IpSettings): IpInfo = {
     val historyLength = max(settings.threshold.period, settings.limit.period)
-    val history = new SizeBoundedList[Long](historyLength)
+    val history = new LongSizeBoundedList(historyLength)
     new IpInfo(ip, history)
   }
 

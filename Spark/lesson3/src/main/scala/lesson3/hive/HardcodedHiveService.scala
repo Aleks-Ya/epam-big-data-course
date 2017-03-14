@@ -14,7 +14,7 @@ object HardcodedHiveService extends HiveService {
 
   override def updateHourStatistics(): Unit = {}
 
-  object NullThresholdSettings extends Settings(NullSettingsIp.nullSettingsIp, Category.Threshold, 2, 10) {}
-  object NullLimitSettings extends Settings(NullSettingsIp.nullSettingsIp, Category.Limit, 5, 20) {}
+  object NullThresholdSettings extends Settings(NullSettingsIp.nullSettingsIp, Category.Threshold, 2, 5) {}
+  object NullLimitSettings extends Settings(NullSettingsIp.nullSettingsIp, Category.Limit, 5, 10) {}
 
 }
