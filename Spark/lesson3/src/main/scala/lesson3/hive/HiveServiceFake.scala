@@ -5,7 +5,7 @@ import lesson3.settings.service.NullSettingsIp
 import lesson3.settings.{Category, Settings}
 import org.slf4j.LoggerFactory
 
-class HardcodedHiveService extends HiveService {
+class HiveServiceFake extends HiveService {
   private val log = LoggerFactory.getLogger(getClass)
   private val settings = List(NullThresholdSettings, NullLimitSettings)
 

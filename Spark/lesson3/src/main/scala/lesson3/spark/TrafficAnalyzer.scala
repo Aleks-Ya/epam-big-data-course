@@ -2,8 +2,10 @@ package lesson3.spark
 
 import java.io.Serializable
 
+import lesson3.incident.IncidentHelper
 import lesson3.ipinfo.{IpInfo, IpInfoHelper}
 import lesson3.net.TcpPacket
+import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.DStream
 
 class TrafficAnalyzer(private val stream: DStream[TcpPacket])
@@ -30,7 +32,6 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
         ipInfo.history.append(packet.size)
         TrafficAnalyzerHelper.processThreshold(ip, settings, ipInfo)
         TrafficAnalyzerHelper.processLimit(ip, settings, ipInfo)
-        TrafficAnalyzerHelper.processHourStatistics(ip, ipInfo)
       } else {
         ipInfo = ipInfoOpt.get
         ipInfo.history.append(0)
@@ -42,7 +43,9 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
         None
       }
     })
-    .print()
+    .foreachRDD((rdd: RDD[(String, IpInfo)]) => {
+      rdd.map(pair => IncidentHelper.newIpStatistics(pair._1, pair._2)).foreach(TrafficAnalyzerHelper.writeToHive)
+    })
 }
 
 

@@ -2,7 +2,7 @@ package lesson3.spark
 
 import lesson3.incident.IncidentHelper
 import lesson3.ioc.AppContext
-import lesson3.ipinfo.IpInfo
+import lesson3.ipinfo.{IpInfo, IpStatistics}
 import lesson3.settings.IpSettings
 import org.slf4j.LoggerFactory
 
@@ -31,6 +31,10 @@ object TrafficAnalyzerHelper extends Serializable {
 
   def processHourStatistics(ip: String, ipInfo: IpInfo): Unit = {
     val statistics = IncidentHelper.newIpStatistics(ip, ipInfo)
+    AppContext.hiveService.updateHourStatistics(statistics)
+  }
+
+  def writeToHive(statistics: IpStatistics): Unit = {
     AppContext.hiveService.updateHourStatistics(statistics)
   }
 
