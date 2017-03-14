@@ -11,6 +11,5 @@ class Incident(
                 val thresholdValue: Double,
                 val period: Long) {
 
-  override def toString: String =
-    "%s(ip=%s,eventType=%s)".format(this.getClass.getSimpleName, ip, incidentType)
+  override def toString = s"Incident(uuid=$uuid, timestamp=$timestamp, ip=$ip, incidentType=$incidentType, factValue=$factValue, thresholdValue=$thresholdValue, period=$period)"
 }
