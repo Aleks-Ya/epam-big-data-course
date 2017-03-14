@@ -4,7 +4,7 @@ import java.util.concurrent.{Callable, ExecutorService, Executors}
 
 import org.apache.spark.api.java.StorageLevels
 import org.apache.spark.streaming.receiver.Receiver
-import org.pcap4j.core.{BpfProgram, PcapHandle, Pcaps}
+import org.pcap4j.core.{PcapHandle, Pcaps}
 import org.pcap4j.packet.{IpV4Packet, Packet}
 import org.slf4j.LoggerFactory
 
@@ -12,11 +12,10 @@ import scala.collection.JavaConverters._
 
 class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_ONLY) {
   private val log = LoggerFactory.getLogger(getClass)
-  private val tcpFilter = "tcp"
   private var pool: ExecutorService = _
 
   override def onStart() {
-    log.debug("Starting " + getClass.getSimpleName)
+    log.debug("Starting NetworkInterfaceReceiver")
 
     val nifs = Pcaps.findAllDevs.asScala
 
@@ -27,13 +26,15 @@ class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_
     log.info("This PC's IPs: " + myIps)
 
     val callables = nifs
-      .map(nif => new PcapHandle.Builder(nif.getName).build())
-      .map(handle => {
-        handle.setFilter(tcpFilter, BpfProgram.BpfCompileMode.OPTIMIZE)
+      .map(nif => {
+        log.debug("Start creating handle for NIF: " + nif.getName)
+        val handle = new PcapHandle.Builder(nif.getName).build()
+        log.info("Handle created for NIF: " + nif.getName)
         handle
       })
       .map(handle => {
-        new Callable[Unit] {
+        log.debug("Start creating callable for handler: " + handle)
+        val callable = new Callable[Unit] {
           override def call(): Unit = {
             log.info("PcapHandle called: " + this)
             while (!Thread.currentThread().isInterrupted) {
@@ -53,12 +54,15 @@ class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_
             }
           }
         }
-      })
+        log.info("Callable created for handler: " + handle)
+        callable
+      }).toList
 
+    log.debug("Thread count: " + callables.length)
     pool = Executors.newFixedThreadPool(callables.length)
+    log.debug("Thread pool created")
     pool.invokeAll(callables.asJava)
-
-    log.info(getClass.getSimpleName + " started")
+    log.info("NetworkInterfaceReceiver started")
   }
 
   private def convertToTcpPacket(packet: Packet) = {
@@ -66,7 +70,7 @@ class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_
     val srcAddr = ep.getHeader.getSrcAddr.getHostAddress
     val length = ep.length
     val tcpPacket = new TcpPacket(srcAddr, length)
-    log.info("Created: " + tcpPacket)
+    log.debug("Created: " + tcpPacket)
     tcpPacket
   }
 

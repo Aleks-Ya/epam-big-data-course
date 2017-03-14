@@ -29,7 +29,7 @@ object AppContext {
     val batchDuration = Seconds(1)
     val ssc = new StreamingContext(sparkContext, batchDuration)
     ssc.checkpoint(AppProperties.checkpointDirectory)
-    log.info("SparkContext started")
+    log.info("StreamingContext started")
     ssc
   }
 
