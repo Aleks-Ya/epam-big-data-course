@@ -20,6 +20,7 @@ class FakeReceiver(private val intervalMillis: Long = 2000L)
         }
       }
     }
+    thread.setDaemon(true)
     thread.start()
   }
 
