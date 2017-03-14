@@ -20,25 +20,25 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
     })
     .updateStateByKey((pairs, ipInfoOpt: Option[IpInfo]) => {
       assert(pairs.size <= 1)
-      var newIpInfo: IpInfo = null
+      var ipInfo: IpInfo = null
       if (pairs.nonEmpty) {
         val pair = pairs.head
         val packet = pair._1
         val settings = pair._2
         val ip = packet.ip
-        newIpInfo = ipInfoOpt.getOrElse(IpInfoHelper.newIpInfo(ip, settings))
-        newIpInfo.history.append(packet.size)
-        TrafficAnalyzerHelper.processThreshold(ip, settings, newIpInfo)
-        TrafficAnalyzerHelper.processLimit(ip, settings, newIpInfo)
-        TrafficAnalyzerHelper.processHourStatistics(ip, newIpInfo)
+        ipInfo = ipInfoOpt.getOrElse(IpInfoHelper.newIpInfo(ip, settings))
+        ipInfo.history.append(packet.size)
+        TrafficAnalyzerHelper.processThreshold(ip, settings, ipInfo)
+        TrafficAnalyzerHelper.processLimit(ip, settings, ipInfo)
+        TrafficAnalyzerHelper.processHourStatistics(ip, ipInfo)
       } else {
-        newIpInfo = ipInfoOpt.get
-        newIpInfo.history.append(0)
+        ipInfo = ipInfoOpt.get
+        ipInfo.history.append(0)
       }
-      if (newIpInfo.history.sum > 0) {
-        Some(newIpInfo)
+      if (ipInfo.history.sum > 0) {
+        Some(ipInfo)
       } else {
-        TrafficAnalyzerHelper.logDebug("Remove state: " + newIpInfo)
+        TrafficAnalyzerHelper.logDebug("Remove state: " + ipInfo)
         None
       }
     })

@@ -3,14 +3,14 @@ package lesson3.kafka
 import java.util.Properties
 
 import lesson3.incident.Incident
-import lesson3.properties.ApplicationProperties
+import lesson3.ioc.AppProperties
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.slf4j.LoggerFactory
 
-object KafkaServiceImpl extends KafkaService {
+class KafkaServiceImpl extends KafkaService {
   private var producer: KafkaProducer[String, String] = _
   private val topic = "alerts"
-  private val log = LoggerFactory.getLogger(KafkaServiceImpl.getClass)
+  private val log = LoggerFactory.getLogger(classOf[KafkaServiceImpl])
 
   override def sendEvent(event: Incident): Unit = {
     if (producer != null) {
@@ -25,7 +25,7 @@ object KafkaServiceImpl extends KafkaService {
   override def start(): Unit = {
     log.info("Starting KafkaProducer")
     val props = new Properties()
-    props.put("bootstrap.servers", ApplicationProperties.kafkaBootstrapServers)
+    props.put("bootstrap.servers", AppProperties.kafkaBootstrapServers)
     props.put("acks", "all")
     props.put("retries", "0")
     props.put("batch.size", "16384")

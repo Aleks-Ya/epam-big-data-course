@@ -1,5 +1,6 @@
 package lesson3
 
+import lesson3.ioc.AppContext
 import lesson3.kafka.KafkaService
 import lesson3.spark.TrafficAnalyzer
 import org.apache.spark.streaming.StreamingContext
@@ -9,10 +10,10 @@ object Main {
   private val log = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]) {
-    val ssc: StreamingContext = Context.streamingContext
-    val kafkaService: KafkaService = Context.kafkaService
+    val ssc: StreamingContext = AppContext.streamingContext
+    val kafkaService: KafkaService = AppContext.kafkaService
     try {
-      val receiver = Context.receiver
+      val receiver = AppContext.receiver
       val stream = ssc.receiverStream(receiver)
       new TrafficAnalyzer(stream)
       kafkaService.start()

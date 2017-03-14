@@ -1,0 +1,51 @@
+package lesson3.ioc
+
+import lesson3.hive.HiveService
+import lesson3.incident.service.IncidentService
+import lesson3.kafka.KafkaService
+import lesson3.net.TcpPacket
+import lesson3.settings.service.SettingsService
+import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.streaming.receiver.Receiver
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.{SparkConf, SparkContext}
+import org.slf4j.LoggerFactory
+
+object AppContext {
+  private val log = LoggerFactory.getLogger(getClass)
+
+  val sparkContext: SparkContext = {
+    val conf = new SparkConf()
+      .setAppName(AppProperties.sparkAppName)
+      .setMaster(AppProperties.sparkMaster)
+    new SparkContext(conf)
+  }
+
+  val streamingContext: StreamingContext = {
+    val batchDuration = Seconds(1)
+    val ssc = new StreamingContext(sparkContext, batchDuration)
+    ssc.checkpoint(AppProperties.checkpointDirectory)
+    ssc
+  }
+
+  val hiveContext: HiveContext = {
+    try {
+      new HiveContext(sparkContext)
+    } catch {
+      case e: Exception => log.error("Hive context isn't initialized", e)
+        null
+    }
+  }
+
+  val receiver: Receiver[TcpPacket] = instance(AppProperties.sparkReceiverImpl)
+  val kafkaService: KafkaService = instance(AppProperties.kafkaServiceImpl)
+  val incidentService: IncidentService = instance(AppProperties.incidentServiceImpl)
+  val hiveService: HiveService = instance(AppProperties.hiveServiceImpl)
+  val settingsService: SettingsService = instance(AppProperties.settingsServiceImpl)
+
+  private def instance[T](className: String): T = {
+    val inst = Class.forName(className).newInstance().asInstanceOf[T]
+    log.info("Class instantiated: " + inst)
+    inst
+  }
+}
