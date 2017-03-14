@@ -31,7 +31,9 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
         TrafficAnalyzerHelper.processLimit(ip, settings, ipInfo)
         Some(ipInfo)
       } else {
-        ipInfoOpt
+        val ipInfo = ipInfoOpt.get
+        ipInfo.history.append(0)
+        Some(ipInfo)
       }
     })
     .print()
