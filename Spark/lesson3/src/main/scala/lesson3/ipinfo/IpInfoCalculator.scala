@@ -6,8 +6,12 @@ object IpInfoCalculator extends Serializable {
     * Used for threshold.
     */
   def calculateDownloadRate(ipInfo: IpInfo, period: Long): Double = {
-    val thresholdSum = ipInfo.history.take(period.toInt).sum
-    thresholdSum / period
+    var actualPeriod = period
+    if (actualPeriod == 0) return 0
+    if (actualPeriod > ipInfo.history.size) {
+      actualPeriod = ipInfo.history.size
+    }
+    calculateDownloadedTotal(ipInfo, actualPeriod) / actualPeriod
   }
 
   /**
@@ -15,8 +19,14 @@ object IpInfoCalculator extends Serializable {
     * Used for limit.
     */
   def calculateDownloadedTotal(ipInfo: IpInfo, period: Long): Long = {
-    val thresholdSum = ipInfo.history.take(period.toInt).sum
-    thresholdSum / period
+    if (period < 0) {
+      throw new IllegalArgumentException(s"Period $period is < 0")
+    }
+    val history = ipInfo.history
+    var periodFromTail = history.size - period.toInt
+    periodFromTail = if (periodFromTail >= 0) periodFromTail else 0
+    val tail = history.drop(periodFromTail)
+    tail.sum
   }
 
   /**
