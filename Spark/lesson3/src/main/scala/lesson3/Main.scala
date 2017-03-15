@@ -15,6 +15,8 @@ object Main {
     var kafkaService: KafkaService = null
     try {
       LoggerHelper.setLogLevel("lesson3", Level.DEBUG)
+      LoggerHelper.setLogLevel("org.apache.spark", Level.WARN)
+      LoggerHelper.setLogLevel("org.spark-project", Level.WARN)
 
       kafkaService = AppContext.kafkaService
       val receiver = AppContext.receiver

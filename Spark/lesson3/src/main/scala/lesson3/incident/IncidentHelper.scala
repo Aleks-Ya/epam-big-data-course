@@ -4,10 +4,13 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-import lesson3.ipinfo.{IpInfo, IpInfoCalculator, IpStatistics}
+import lesson3.ipinfo.{IpInfo, IpInfoCalculator}
 import lesson3.settings.IpSettings
+import org.apache.spark.sql.Row
+import org.slf4j.LoggerFactory
 
 object IncidentHelper extends Serializable {
+  private val log = LoggerFactory.getLogger(getClass)
 
   def createThresholdExceedIncident(ip: String, ipInfo: IpInfo, ipSettings: IpSettings): Option[Incident] = {
     val threshold = ipSettings.threshold
@@ -61,11 +64,12 @@ object IncidentHelper extends Serializable {
     new Incident(uuid, timestamp, ip, incidentType, factValue, threshold, period)
   }
 
-  def newIpStatistics(ip: String,
-                      ipInfo: IpInfo): IpStatistics = {
+  def newIpStatisticsRow(ip: String, ipInfo: IpInfo): Row = {
     val timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
     val trafficConsumed = IpInfoCalculator.calculateDownloadedHour(ipInfo)
     val averageSpeed = IpInfoCalculator.calculateDownloadRateHour(ipInfo)
-    new IpStatistics(timestamp, ip, trafficConsumed, averageSpeed)
+    val row = Row(timestamp, ip, trafficConsumed, averageSpeed)
+    log.debug("Row created: " + row)
+    row
   }
 }

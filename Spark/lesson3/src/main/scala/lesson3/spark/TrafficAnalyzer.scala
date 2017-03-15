@@ -3,14 +3,15 @@ package lesson3.spark
 import java.io.Serializable
 
 import lesson3.incident.IncidentHelper
+import lesson3.ioc.{AppContext, AppProperties}
 import lesson3.ipinfo.{IpInfo, IpInfoHelper}
 import lesson3.net.TcpPacket
-import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.Minutes
 import org.apache.spark.streaming.dstream.DStream
 
 class TrafficAnalyzer(private val stream: DStream[TcpPacket])
   extends Serializable {
+  val windowInterval = Minutes(AppProperties.statisticsIntervalMin.toInt)
 
   stream
     .map(packet => (packet.ip, packet))
@@ -47,10 +48,9 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
         None
       }
     })
-    .window(Minutes(1), Minutes(1))
-    .foreachRDD((rdd: RDD[(String, IpInfo)]) => {
-      rdd.map(pair => IncidentHelper.newIpStatistics(pair._1, pair._2)).foreach(TrafficAnalyzerHelper.writeToHive)
-    })
+    .window(windowInterval, windowInterval)
+    .map(tuple => IncidentHelper.newIpStatisticsRow(tuple._1, tuple._2))
+    .foreachRDD(rdd => AppContext.hiveService.saveHourStatistics(rdd))
 }
 
 

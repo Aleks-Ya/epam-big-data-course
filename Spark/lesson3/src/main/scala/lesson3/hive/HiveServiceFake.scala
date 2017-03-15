@@ -1,8 +1,9 @@
 package lesson3.hive
 
-import lesson3.ipinfo.IpStatistics
 import lesson3.settings.service.NullSettingsIp
 import lesson3.settings.{Category, Settings}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.Row
 import org.slf4j.LoggerFactory
 
 class HiveServiceFake extends HiveService {
@@ -18,7 +19,7 @@ class HiveServiceFake extends HiveService {
 
   override def updateTop3FastestIp(ips: List[String]): Unit = {}
 
-  override def updateHourStatistics(statistics: IpStatistics): Unit = {
-    log.debug("Statistics update: " + statistics)
+  override def saveHourStatistics(rdd: RDD[Row]): Unit = {
+    log.info("Save statistics: " + rdd.collect.mkString)
   }
 }

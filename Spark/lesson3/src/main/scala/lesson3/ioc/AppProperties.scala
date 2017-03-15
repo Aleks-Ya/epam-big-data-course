@@ -50,6 +50,10 @@ object AppProperties {
     prop("settings.service.impl")
   }
 
+  def statisticsIntervalMin: String = {
+    prop("statistics.interval.min")
+  }
+
   def checkpointDirectory: String = {
     val dir = Files.createTempDirectory("checkpoint_").toString
     log.info(s"Checkpoint directory: $dir")

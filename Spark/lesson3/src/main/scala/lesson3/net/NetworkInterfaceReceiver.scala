@@ -27,16 +27,14 @@ class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_
 
     val callables = nifs
       .map(nif => {
-        log.debug("Start creating handle for NIF: " + nif.getName)
         val handle = new PcapHandle.Builder(nif.getName).build()
-        log.info("Handle created for NIF: " + nif.getName)
+        log.debug("Handle created for NIF: " + nif.getName)
         handle
       })
       .map(handle => {
-        log.debug("Start creating callable for handler: " + handle)
         val callable = new Callable[Unit] {
           override def call(): Unit = {
-            log.info("PcapHandle called: " + this)
+            log.debug("PcapHandle called: " + this)
             while (!Thread.currentThread().isInterrupted) {
               try {
                 while (!Thread.currentThread().isInterrupted) {
@@ -54,14 +52,14 @@ class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_
             }
           }
         }
-        log.info("Callable created for handler: " + handle)
+        log.debug("Callable created for handler: " + handle)
         callable
       }).toList
 
     log.debug("Thread count: " + callables.length)
     pool = Executors.newFixedThreadPool(callables.length)
-    log.debug("Thread pool created")
     pool.invokeAll(callables.asJava)
+
     log.info("NetworkInterfaceReceiver started")
   }
 
