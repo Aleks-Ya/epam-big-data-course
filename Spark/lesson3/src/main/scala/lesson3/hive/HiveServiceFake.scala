@@ -7,7 +7,10 @@ import org.slf4j.LoggerFactory
 
 class HiveServiceFake extends HiveService {
   private val log = LoggerFactory.getLogger(getClass)
-  private val settings = List(NullThresholdSettings, NullLimitSettings)
+  private val settings = List(
+    new Settings(NullSettingsIp.nullSettingsIp, Category.Threshold, 2, 5),
+    new Settings(NullSettingsIp.nullSettingsIp, Category.Limit, 5, 10)
+  )
 
   override def readSettings(): List[Settings] = {
     settings
@@ -18,8 +21,4 @@ class HiveServiceFake extends HiveService {
   override def updateHourStatistics(statistics: IpStatistics): Unit = {
     log.debug("Statistics update: " + statistics)
   }
-
-  object NullThresholdSettings extends Settings(NullSettingsIp.nullSettingsIp, Category.Threshold, 2, 5) {}
-  object NullLimitSettings extends Settings(NullSettingsIp.nullSettingsIp, Category.Limit, 5, 10) {}
-
 }

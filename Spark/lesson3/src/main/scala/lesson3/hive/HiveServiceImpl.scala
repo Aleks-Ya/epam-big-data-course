@@ -21,7 +21,7 @@ class HiveServiceImpl extends HiveService {
   }
 
   override def updateHourStatistics(statistics: IpStatistics): Unit = {
-    log.debug("Write statistics: " + statistics)
+    log.info("Write statistics: " + statistics)
     AppContext.hiveContext.sql("INSERT OVERWRITE INTO statistics_by_hour(timestamp, ip, traffic_consumed, average_speed)" +
       s"VALUES (${statistics.timestamp},${statistics.ip},${statistics.trafficConsumed},${statistics.averageSpeed})")
   }

@@ -14,7 +14,7 @@ object TrafficAnalyzerHelper extends Serializable {
   }
 
   def processThreshold(ip: String, settings: IpSettings, ipInfo: IpInfo): Unit = {
-    log.info(s"Process threshold: $ip, $settings, $ipInfo")
+    log.trace(s"Process threshold: $ip, $settings, $ipInfo")
     val incidentOpt = IncidentHelper.createThresholdExceedIncident(ip, ipInfo, settings)
     if (incidentOpt.nonEmpty) {
       AppContext.kafkaService.sendEvent(incidentOpt.get)
@@ -23,7 +23,7 @@ object TrafficAnalyzerHelper extends Serializable {
   }
 
   def processLimit(ip: String, settings: IpSettings, ipInfo: IpInfo): Unit = {
-    log.info(s"Process limit: $ip, $settings, $ipInfo")
+    log.trace(s"Process limit: $ip, $settings, $ipInfo")
     val incidentOpt = IncidentHelper.createLimitExceedIncident(ip, ipInfo, settings)
     if (incidentOpt.nonEmpty) {
       AppContext.kafkaService.sendEvent(incidentOpt.get)

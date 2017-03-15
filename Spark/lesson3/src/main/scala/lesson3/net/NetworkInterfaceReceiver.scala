@@ -70,7 +70,7 @@ class NetworkInterfaceReceiver extends Receiver[TcpPacket](StorageLevels.MEMORY_
     val srcAddr = ep.getHeader.getSrcAddr.getHostAddress
     val length = ep.length
     val tcpPacket = new TcpPacket(srcAddr, length)
-    log.debug("Created: " + tcpPacket)
+    log.trace("Created: " + tcpPacket)
     tcpPacket
   }
 
