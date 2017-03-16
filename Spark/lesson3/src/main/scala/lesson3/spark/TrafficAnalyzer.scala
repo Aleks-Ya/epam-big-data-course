@@ -24,10 +24,9 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket]) extends Serializab
   stream
     .window(windowInterval, windowInterval)
     .map((packet: TcpPacket) => (packet.ip, new StatisticsInfo(packet.ip, packet.size, 1)))
-    .reduceByKey((i1: StatisticsInfo, i2: StatisticsInfo) => {
-      val ip = i1.ip
-      new StatisticsInfo(ip, i1.totalSize + i2.totalSize, i1.count + i2.count)
-    })
+    .reduceByKey((i1: StatisticsInfo, i2: StatisticsInfo) =>
+      new StatisticsInfo(i1.ip, i1.totalSize + i2.totalSize, i1.count + i2.count)
+    )
     .map(tuple => IncidentHelper.newStatisticsRow(tuple._2))
     .foreachRDD(rdd => AppContext.hiveService.saveHourStatistics(rdd))
 }
