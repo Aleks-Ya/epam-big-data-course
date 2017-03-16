@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 object AppContext {
   private val log = LoggerFactory.getLogger(getClass)
 
-  val sparkContext: SparkContext = {
+  lazy val sparkContext: SparkContext = {
     log.debug("Starting SparkContext")
     val conf = new SparkConf()
       .setAppName(AppProperties.sparkAppName)
@@ -24,7 +24,7 @@ object AppContext {
     sc
   }
 
-  val streamingContext: StreamingContext = {
+  lazy val streamingContext: StreamingContext = {
     log.debug("Starting StreamingContext")
     val batchDuration = Seconds(1)
     val ssc = new StreamingContext(sparkContext, batchDuration)
@@ -33,7 +33,7 @@ object AppContext {
     ssc
   }
 
-  val hiveContext: HiveContext = {
+  lazy val hiveContext: HiveContext = {
     log.debug("Starting HiveContext")
     try {
       val hc = new HiveContext(sparkContext)
@@ -45,11 +45,11 @@ object AppContext {
     }
   }
 
-  val receiver: Receiver[TcpPacket] = instance(AppProperties.sparkReceiverImpl)
-  val kafkaService: KafkaService = instance(AppProperties.kafkaServiceImpl)
-  val incidentService: IncidentService = instance(AppProperties.incidentServiceImpl)
-  val hiveService: HiveService = instance(AppProperties.hiveServiceImpl)
-  val settingsService: SettingsService = instance(AppProperties.settingsServiceImpl)
+  lazy val receiver: Receiver[TcpPacket] = instance(AppProperties.sparkReceiverImpl)
+  lazy val kafkaService: KafkaService = instance(AppProperties.kafkaServiceImpl)
+  lazy val incidentService: IncidentService = instance(AppProperties.incidentServiceImpl)
+  lazy val hiveService: HiveService = instance(AppProperties.hiveServiceImpl)
+  lazy val settingsService: SettingsService = instance(AppProperties.settingsServiceImpl)
 
   private def instance[T](className: String): T = {
     val inst = Class.forName(className).newInstance().asInstanceOf[T]

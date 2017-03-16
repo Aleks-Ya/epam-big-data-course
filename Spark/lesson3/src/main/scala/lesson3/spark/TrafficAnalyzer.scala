@@ -6,6 +6,7 @@ import lesson3.incident.IncidentHelper
 import lesson3.ioc.{AppContext, AppProperties}
 import lesson3.ipinfo.{IpInfo, IpInfoHelper}
 import lesson3.net.TcpPacket
+import lesson3.spark.TrafficAnalyzerSteps._
 import org.apache.spark.streaming.Minutes
 import org.apache.spark.streaming.dstream.DStream
 
@@ -14,16 +15,9 @@ class TrafficAnalyzer(private val stream: DStream[TcpPacket])
   val windowInterval = Minutes(AppProperties.statisticsIntervalMin.toInt)
 
   stream
-    .map(packet => (packet.ip, packet))
-    .reduceByKey((p1, p2) => new TcpPacket(p1.ip, p1.size + p2.size))
-    .map(pair => {
-      val ip = pair._1
-      val packet = pair._2
-      val settings = TrafficAnalyzerHelper.settingsByIp(ip)
-      val tuple = (ip, (packet, settings))
-      TrafficAnalyzerHelper.logInfo("Tuple created: " + tuple)
-      tuple
-    })
+    .map(mapIpToPacket)
+    .reduceByKey(reducePacketSize)
+    .map(addSettings)
     .updateStateByKey((pairs, ipInfoOpt: Option[IpInfo]) => {
       TrafficAnalyzerHelper.logInfo("Process pairs: " + pairs)
       assert(pairs.size <= 1)
