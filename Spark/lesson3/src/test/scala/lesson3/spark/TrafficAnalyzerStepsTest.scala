@@ -1,6 +1,7 @@
 package lesson3.spark
 
 import lesson3.net.TcpPacket
+import lesson3.settings.service.DefaultIpSettings
 import org.scalatest.{FlatSpec, Matchers}
 
 class TrafficAnalyzerStepsTest extends FlatSpec with Matchers {
@@ -27,6 +28,6 @@ class TrafficAnalyzerStepsTest extends FlatSpec with Matchers {
     val ip = "123.456.294.111"
     val packet = new TcpPacket(ip, 3000)
     val value = TrafficAnalyzerSteps.addSettings(ip, packet)
-//    value shouldEqual (ip, (packet, ))
+    value shouldEqual(ip, (packet, DefaultIpSettings))
   }
 }

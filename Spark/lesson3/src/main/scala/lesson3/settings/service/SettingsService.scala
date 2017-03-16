@@ -8,6 +8,6 @@ trait SettingsService extends Serializable {
 
 }
 
-object NullSettingsIp {
-  val nullSettingsIp = "NULL"
+object DefaultSettingsIp {
+  val defaultSettingsIp = "NULL"
 }

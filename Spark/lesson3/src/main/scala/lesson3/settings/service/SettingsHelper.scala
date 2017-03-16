@@ -24,7 +24,7 @@ package object SettingsHelper {
     }
   }
 
-  def verifyNullSettings(settingsListOpt: Option[List[Settings]]): IpSettings = {
+  def verifyDefaultSettings(settingsListOpt: Option[List[Settings]]): IpSettings = {
     if (settingsListOpt.isEmpty) {
       throw new IllegalArgumentException
     }
@@ -33,7 +33,7 @@ package object SettingsHelper {
       throw new IllegalArgumentException
     }
     settingsList.foreach(settings => {
-      if (!NullSettingsIp.nullSettingsIp.equalsIgnoreCase(settings.ip)) throw new IllegalArgumentException()
+      if (!DefaultSettingsIp.defaultSettingsIp.equalsIgnoreCase(settings.ip)) throw new IllegalArgumentException()
     })
     val thresholdSettings = findSettingsByCategory(settingsList, Category.Threshold).get
     val limitSettings = findSettingsByCategory(settingsList, Category.Limit).get
