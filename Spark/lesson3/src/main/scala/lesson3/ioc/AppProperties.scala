@@ -18,6 +18,10 @@ object AppProperties {
   properties.load(new InputStreamReader(is))
   log.info(s"All properties:\n$properties\n")
 
+  def factoryImpl: String = {
+    prop("factory.impl")
+  }
+
   def sparkAppName: String = {
     prop("spark.app.name")
   }
