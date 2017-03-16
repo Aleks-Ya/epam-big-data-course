@@ -6,6 +6,7 @@ import java.util.UUID
 
 import lesson3.ipinfo.{IpInfo, IpInfoCalculator}
 import lesson3.settings.IpSettings
+import lesson3.spark.StatisticsInfo
 import org.apache.spark.sql.Row
 import org.slf4j.LoggerFactory
 
@@ -69,6 +70,15 @@ object IncidentHelper extends Serializable {
     val trafficConsumed = IpInfoCalculator.calculateDownloadedHour(ipInfo)
     val averageSpeed = IpInfoCalculator.calculateDownloadRateHour(ipInfo)
     val row = Row(timestamp, ip, trafficConsumed, averageSpeed)
+    log.debug("Row created: " + row)
+    row
+  }
+
+  def newStatisticsRow(info: StatisticsInfo): Row = {
+    val timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    val trafficConsumed = info.totalSize / 1024 * 1024 //MB
+    val averageSpeed: Double = if (info.count != 0) info.totalSize / info.count else 0
+    val row = Row(timestamp, info.ip, trafficConsumed, averageSpeed)
     log.debug("Row created: " + row)
     row
   }

@@ -32,8 +32,18 @@ class HiveServiceImpl extends HiveService {
   )
 
   override def saveHourStatistics(rdd: RDD[Row]): Unit = {
-    AppContext.hiveContext
+    log.info("Save hour statistics")
+    val df = AppContext.hiveContext
       .createDataFrame(rdd, schema)
+
+    val top3 = df.sort("average_speed")
+      .take(3).reverse
+      .map((row: Row) => row.getString(1) + " - " + row.getDouble(3))
+      .mkString("\n")
+    log.info(s"\nTop 3 by average speed:\n$top3\n")
+
+    df
+      .sort("average_speed")
       .write
       .mode(SaveMode.Append)
       .saveAsTable("statistics_by_hour")
