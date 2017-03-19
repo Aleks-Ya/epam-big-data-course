@@ -1,75 +1,74 @@
 package lesson4
 
+import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.linalg.{VectorUDTPublic, Vectors}
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.sql.{Row, SparkSession}
-import org.apache.spark.sql.types.{DoubleType, IntegerType, StructField, StructType}
-import org.slf4j.LoggerFactory
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+import org.slf4j.LoggerFactory
 
 object Main {
   private val log = LoggerFactory.getLogger(getClass)
 
   def main(args: Array[String]): Unit = {
     val ss = SparkSession.builder()
-      .appName("Iablokov Lesson 3")
+      .appName("Iablokov Lesson 4")
       .master("local[*]")
       .getOrCreate()
-    val sqlContext = ss.sqlContext
-    import sqlContext.implicits._
+
+    val inputDataSize = 15223
+    val labelCol = "label"
+    val idCol = "id"
+    val featuresCol = "features"
+    val maxIter = 10
 
     val vectorsPath = resourceToPath("Objects.csv")
-    val vectors = ss.read.textFile(vectorsPath)
+    val vectorsRdd = ss.sparkContext.textFile(vectorsPath)
       .map(line => line.replaceAll(",", "."))
-      .map(line => line.split(";"))
-      .map(values => values.map(value => value.toDouble).array)
-      .withColumnRenamed("value", "features")
-      .withColumn("id", monotonically_increasing_id())
-    vectors.show
-    //    val rdd =    replaced .rdd
-    //      .map(doubles => Row(doubles))
-    //    rdd.take(5).foreach(println)
-    //
-    //    val vectors = ss.createDataFrame(rdd, makeSchema)
-    //    vectors.show
+      .map(line => line.split(";").map(value => value.toDouble).map(value => if (value.isNaN) 0 else value).array)
+      .map(array => Vectors.dense(array))
+      .map(vector => Row(vector))
+    assert(vectorsRdd.count() == inputDataSize)
 
+    val schema = StructType(
+      StructField(featuresCol, VectorUDTPublic, nullable = false) :: Nil
+    )
 
-    //    val vectorsPath = resourceToPath("Objects.csv")
-    //    val featuresDf = ss.read
-    //      .option("delimiter", ";")
-    //      .option("nullValue", "NaN")
-    ////      .schema(schema)
-    //      .csv(vectorsPath)
-    //    featuresDf.show
-    //    import sqlContext.implicits._
-    //        val vectors = featuresDf
-    //          .map(row => row.toSeq)
-    //          .map(row => row.map(value => value.toString.toDouble))
-    //        vectors.show
+    val vectorsDf = ss.createDataFrame(vectorsRdd, schema)
+      .withColumn(idCol, monotonically_increasing_id())
 
     val labelsPath = resourceToPath("Target.csv")
-    val labels = ss.read.csv(labelsPath)
-      .withColumnRenamed("_c0", "label")
-      .withColumn("id", monotonically_increasing_id())
-    labels.show
+    val labelsDf = ss.read.csv(labelsPath)
+      .withColumnRenamed("_c0", labelCol)
+      .withColumn(labelCol, col(labelCol).cast(IntegerType))
+      .withColumn(idCol, monotonically_increasing_id())
+    assert(labelsDf.count() == inputDataSize)
 
-    val labelledVectors = vectors.join(labels, "id")
-    labelledVectors.show
+    val labelledVectors = vectorsDf.join(labelsDf, idCol).randomSplit(Array[Double](1, 1))
+    val trainingData = labelledVectors(0)
+    val testData = labelledVectors(1)
 
-    val estimator = new LinearRegression().setMaxIter(10)
-    val model = estimator.fit(vectors)
+    val estimator = new LinearRegression().setMaxIter(maxIter)
+    val model = estimator.fit(trainingData)
+
+    val trainingSummary = model.summary
+    println(s"numIterations: ${trainingSummary.totalIterations}")
+    println(s"objectiveHistory: [${trainingSummary.objectiveHistory.mkString(",")}]")
+    println(s"RMSE: ${trainingSummary.rootMeanSquaredError}")
+    println(s"r2: ${trainingSummary.r2}")
+    trainingSummary.residuals.show()
+
+    val predictions = model.transform(testData)
+    predictions.show(100)
+    val evaluator = new RegressionEvaluator()
+      .setLabelCol(labelCol)
+      .setPredictionCol("prediction")
+      .setMetricName("rmse")
+    val rmse = evaluator.evaluate(predictions)
+    println(rmse)
 
     ss.close
-  }
-
-  private def makeSchema = {
-    val intField: (String) => StructField = (name: String) => StructField(name, IntegerType, nullable = true)
-    val doubleField: (String) => StructField = (name: String) => StructField(name, DoubleType, nullable = true)
-    //    val fields = (for (i <- 0 to 50) yield intField("f" + i))
-    //      .patch(48, Seq(doubleField("f48"), doubleField("f49")), 2)
-    val fields = for (i <- 0 to 50) yield doubleField("f" + i)
-    val schema = StructType(fields)
-    schema.printTreeString()
-    schema
   }
 
   private def resourceToPath(resource: String) = {
