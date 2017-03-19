@@ -7,3 +7,4 @@ target
 bin
 .idea
 *.log
+metastore_db
