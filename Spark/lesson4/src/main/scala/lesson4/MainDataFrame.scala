@@ -17,33 +17,38 @@ object MainDataFrame {
       .master("local[*]")
       .getOrCreate()
 
+    val inputDataSize = 15223
+    val labelCol = "label"
+    val idCol = "id"
+    val featuresCol = "features"
+
     val vectorsPath = resourceToPath("Objects.csv")
-    val rdd = ss.sparkContext.textFile(vectorsPath)
+    val vectorsRdd = ss.sparkContext.textFile(vectorsPath)
       .map(line => line.replaceAll(",", "."))
       .map(line => line.split(";").map(value => value.toDouble).array)
       .map(array => Vectors.dense(array))
       .map(vector => Row(vector))
-    assert(rdd.count() == 15223)
+    assert(vectorsRdd.count() == inputDataSize)
 
     val schema = StructType(
-      StructField("features", VectorUDTPublic, nullable = false) :: Nil
+      StructField(featuresCol, VectorUDTPublic, nullable = false) :: Nil
     )
 
-    val vectorsDf = ss.createDataFrame(rdd, schema)
-      .withColumn("id", monotonically_increasing_id())
+    val vectorsDf = ss.createDataFrame(vectorsRdd, schema)
+      .withColumn(idCol, monotonically_increasing_id())
 
     val labelsPath = resourceToPath("Target.csv")
-    val labels = ss.read.csv(labelsPath)
-      .withColumnRenamed("_c0", "label")
-      .withColumn("label", col("label").cast(IntegerType))
-      .withColumn("id", monotonically_increasing_id())
-    labels.show
+    val labelsDf = ss.read.csv(labelsPath)
+      .withColumnRenamed("_c0", labelCol)
+      .withColumn(labelCol, col(labelCol).cast(IntegerType))
+      .withColumn(idCol, monotonically_increasing_id())
+    assert(labelsDf.count() == inputDataSize)
 
-    val labelledVectors = vectorsDf.join(labels, "id").randomSplit(Array[Double](1, 1))
+    val labelledVectors = vectorsDf.join(labelsDf, idCol).randomSplit(Array[Double](1, 1))
     val trainingData = labelledVectors(0)
     val testData = labelledVectors(1)
 
-    val estimator = new LinearRegression().setMaxIter(10).setLabelCol("label").setFeaturesCol("features")
+    val estimator = new LinearRegression().setMaxIter(10)
     val model = estimator.fit(trainingData)
 
     val trainingSummary = model.summary
@@ -56,7 +61,7 @@ object MainDataFrame {
     val predictions = model.transform(testData)
     predictions.show
     val evaluator = new RegressionEvaluator()
-      .setLabelCol("label")
+      .setLabelCol(labelCol)
       .setPredictionCol("prediction")
       .setMetricName("rmse")
     val rmse = evaluator.evaluate(predictions)
