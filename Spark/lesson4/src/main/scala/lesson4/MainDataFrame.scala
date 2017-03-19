@@ -25,7 +25,7 @@ object MainDataFrame {
     val vectorsPath = resourceToPath("Objects.csv")
     val vectorsRdd = ss.sparkContext.textFile(vectorsPath)
       .map(line => line.replaceAll(",", "."))
-      .map(line => line.split(";").map(value => value.toDouble).array)
+      .map(line => line.split(";").map(value => value.toDouble).map(value => if (value.isNaN) 0 else value).array)
       .map(array => Vectors.dense(array))
       .map(vector => Row(vector))
     assert(vectorsRdd.count() == inputDataSize)
@@ -59,7 +59,7 @@ object MainDataFrame {
     trainingSummary.residuals.show()
 
     val predictions = model.transform(testData)
-    predictions.show
+    predictions.show(100)
     val evaluator = new RegressionEvaluator()
       .setLabelCol(labelCol)
       .setPredictionCol("prediction")
