@@ -4,7 +4,7 @@ import org.apache.spark.ml.linalg.{VectorUDTPublic, Vectors}
 import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{DoubleType, IntegerType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.slf4j.LoggerFactory
 
 object MainDataFrame {
@@ -34,6 +34,7 @@ object MainDataFrame {
     val labelsPath = resourceToPath("Target.csv")
     val labels = ss.read.csv(labelsPath)
       .withColumnRenamed("_c0", "label")
+      .withColumn("label", col("label").cast(IntegerType))
       .withColumn("id", monotonically_increasing_id())
     labels.show
 
@@ -42,6 +43,13 @@ object MainDataFrame {
 
     val estimator = new LinearRegression().setMaxIter(10).setLabelCol("label").setFeaturesCol("features")
     val model = estimator.fit(labelledVectors)
+
+    val trainingSummary = model.summary
+    println(s"numIterations: ${trainingSummary.totalIterations}")
+    println(s"objectiveHistory: [${trainingSummary.objectiveHistory.mkString(",")}]")
+    println(s"RMSE: ${trainingSummary.rootMeanSquaredError}")
+    println(s"r2: ${trainingSummary.r2}")
+    trainingSummary.residuals.show()
 
     ss.close
   }
