@@ -21,6 +21,7 @@ object MainDataFrame {
     val labelCol = "label"
     val idCol = "id"
     val featuresCol = "features"
+    val maxIter = 10
 
     val vectorsPath = resourceToPath("Objects.csv")
     val vectorsRdd = ss.sparkContext.textFile(vectorsPath)
@@ -48,7 +49,7 @@ object MainDataFrame {
     val trainingData = labelledVectors(0)
     val testData = labelledVectors(1)
 
-    val estimator = new LinearRegression().setMaxIter(10)
+    val estimator = new LinearRegression().setMaxIter(maxIter)
     val model = estimator.fit(trainingData)
 
     val trainingSummary = model.summary
