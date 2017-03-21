@@ -3,6 +3,7 @@ package lesson4
 import lesson4.Category.Category
 import org.slf4j.LoggerFactory
 
+//TODO remove parsing patternCategoryValue
 case object DescriptionParser {
   private val log = LoggerFactory.getLogger(getClass)
   var content: String = _
@@ -21,10 +22,10 @@ case object DescriptionParser {
       val titleLine = lines.head
       val titleMatchesOpt = patternTitle.findFirstMatchIn(titleLine)
       if (titleMatchesOpt.nonEmpty) {
-        val titleMathches = titleMatchesOpt.get
-        val id = titleMathches.group(1).toInt
-        val title = titleMathches.group(2)
-        val category = Category.fromString(titleMathches.group(3))
+        val titleMatches = titleMatchesOpt.get
+        val id = titleMatches.group(1).toInt
+        val title = titleMatches.group(2)
+        val category = Category.fromString(titleMatches.group(3))
 
         val values = lines.tail.map(line => {
           val matchesOpt = patternCategoryValue.findFirstMatchIn(line)
