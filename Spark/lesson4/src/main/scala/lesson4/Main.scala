@@ -19,6 +19,10 @@ object Main {
   private val rawCategoricalCol = "rawCategorical"
   private val featuresCol = "features"
 
+  private val nanValue = 0
+
+  private val fieldsCount = 50
+
   def main(args: Array[String]): Unit = {
     val ss = SparkSession.builder().appName("Iablokov Lesson 4").master("local[1]").getOrCreate()
     val objectsRdd: RDD[Array[String]] = readObjects(ss)
@@ -27,11 +31,22 @@ object Main {
     var labelObjectDf: DataFrame = rddToDf(ss, labelObjectRdd)
       .withColumn(rawFeaturesCol, array())
 
+    labelObjectDf.foreach(row => {
+      val l = row.getSeq(nanValue).length
+      assert(l == fieldsCount, l + "-" + row)
+    })
+
     DescriptionParser.content = readDescriptions(ss)
-    assert(DescriptionParser.allFields.size == 51)
+    assert(DescriptionParser.allFields.size == fieldsCount)
+    assert(DescriptionParser.categoricalFields.size == 16)
+    assert(DescriptionParser.numericFields.size == 34)
+
     DescriptionParser.categoricalFields.foreach { t =>
-      val id = t._1
-      labelObjectDf = labelObjectDf.withColumn("rawCategorical_" + id, lit(-1))
+      val id = t._1.toInt - 1
+      log.info("Categorical id: " + id)
+      val colName = "rawCategorical_" + id
+      log.info("create column: " + colName)
+      labelObjectDf = labelObjectDf.withColumn(colName, lit(-1))
     }
     labelObjectDf.show
 
@@ -42,7 +57,7 @@ object Main {
         val valueStr = x(id)
         val value = Try(valueStr.toInt).getOrElse({
           log.warn(s"Can't parse Int: $valueStr. Use 0")
-          0
+          nanValue
         })
         result += value
       })
@@ -53,6 +68,32 @@ object Main {
 
     labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillNumericalColsUdf(col(objectsCol)))
     labelObjectDf.show
+
+    labelObjectDf = labelObjectDf.withColumn(rawCategoricalCol, lit(Array[Int]()))
+    val fillCategoricalCols: String => (Seq[String], Seq[Int]) => Seq[Int] = column => (objects, rawFeatures) => {
+      assert(objects.size == fieldsCount, objects.size)
+      log.info("Objects size: " + objects.length)
+      log.info("RawFeatures size: " + rawFeatures.length)
+      val fieldId = column.split("_")(1).toInt - 1
+      log.info("fieldsId: " + fieldId)
+      val valueStr = objects(fieldId)
+      val value = Try(valueStr.toInt).getOrElse({
+        log.warn(s"Can't parse Int: $valueStr. Use 0")
+        nanValue
+      })
+      val result = rawFeatures.toBuffer
+      result += value
+      result
+    }
+
+    labelObjectDf.columns.filter(col => col.startsWith("rawCategorical_")).foreach(column => {
+      val fillCategoricalColsUdf = udf(fillCategoricalCols(column))
+      labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(objectsCol), col(rawFeaturesCol)))
+    })
+    labelObjectDf.show
+
+    labelObjectDf.select(col(rawFeaturesCol)).take(10).foreach(println)
+
 
     //    val splitFields: Array[String] => Unit = {
     //      val categoricalFields = List
@@ -124,7 +165,7 @@ object Main {
         case Category.Categorical =>
       }
       index match {
-        case 0 => value.toInt
+        case `nanValue` => value.toInt
         case _ => throw new IllegalArgumentException("Unexpected index: " + index)
       }
     })
@@ -157,7 +198,7 @@ object Main {
   = {
     val labelledVectors = labelledVectorsDf.randomSplit(Array[Double](0.5, 0.5), 1L)
     assert(labelledVectors.length == 2)
-    val trainingData = labelledVectors(0)
+    val trainingData = labelledVectors(nanValue)
     val testData = labelledVectors(1)
     println("Input data size = " + labelledVectorsDf.count)
     println("Test data size = " + testData.count)
@@ -195,6 +236,10 @@ object Main {
       .map(line => line.replaceAll(",", "."))
       .map(line => line.split(";"))
     assert(vectorsRdd.count() == 15223)
+    vectorsRdd.zipWithIndex().foreach(t => {
+      val l = t._1.length
+      assert(l == fieldsCount, s"$l-${t._2}-${t._1.toList}")
+    })
     vectorsRdd
   }
 

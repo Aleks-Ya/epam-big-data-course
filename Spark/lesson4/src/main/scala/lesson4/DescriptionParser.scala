@@ -19,9 +19,9 @@ case object DescriptionParser {
     val propertiesMap = properties.map { property =>
       val lines = property.split("\n").filter(_.nonEmpty)
       val titleLine = lines.head
-      val titleMathchesOpt = patternTitle.findFirstMatchIn(titleLine)
-      if (titleMathchesOpt.nonEmpty) {
-        val titleMathches = titleMathchesOpt.get
+      val titleMatchesOpt = patternTitle.findFirstMatchIn(titleLine)
+      if (titleMatchesOpt.nonEmpty) {
+        val titleMathches = titleMatchesOpt.get
         val id = titleMathches.group(1).toInt
         val title = titleMathches.group(2)
         val category = Category.fromString(titleMathches.group(3))
@@ -46,6 +46,11 @@ case object DescriptionParser {
       }
     }.filter(_ != null).toMap
     log.info("Properties map size: " + propertiesMap.size)
+    if (propertiesMap.contains(51)) {
+      val mutable = collection.mutable.Map(propertiesMap.toSeq: _*)
+      mutable.remove(51)
+      return Map(mutable.toSeq: _*)
+    }
     propertiesMap
   }
 }
