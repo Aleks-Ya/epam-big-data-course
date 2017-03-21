@@ -50,23 +50,7 @@ object Main {
     }
     labelObjectDf.show
 
-    val fillNumericalCols: Seq[String] => Seq[Int] = (x) => {
-      val result = new ListBuffer[Int]()
-      DescriptionParser.numericFields.map({ t =>
-        val id = t._1.toInt - 1
-        val valueStr = x(id)
-        val value = Try(valueStr.toInt).getOrElse({
-          log.warn(s"Can't parse Int: $valueStr. Use 0")
-          nanValue
-        })
-        result += value
-      })
-      result
-    }
-
-    val fillNumericalColsUdf = udf(fillNumericalCols)
-
-    labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillNumericalColsUdf(col(objectsCol)))
+    labelObjectDf = numericalToRawFeatures(labelObjectDf)
     labelObjectDf.show
 
     labelObjectDf = rawCategoricalToRawFeatures(labelObjectDf)
@@ -132,6 +116,27 @@ object Main {
     //    evaluate(testData, model)
     ss.close
   }
+
+  private def numericalToRawFeatures(labelObjectDf: DataFrame) = {
+    val fillNumericalCols: Seq[String] => Seq[Int] = (x) => {
+      val result = new ListBuffer[Int]()
+      DescriptionParser.numericFields.map({ t =>
+        val id = t._1.toInt - 1
+        val valueStr = x(id)
+        val value = Try(valueStr.toInt).getOrElse({
+          log.warn(s"Can't parse Int: $valueStr. Use 0")
+          nanValue
+        })
+        result += value
+      })
+      result
+    }
+
+    val fillNumericalColsUdf = udf(fillNumericalCols)
+
+    labelObjectDf.withColumn(rawFeaturesCol, fillNumericalColsUdf(col(objectsCol)))
+  }
+
 
   private def rawCategoricalToRawFeatures(labelObjectDf1: DataFrame) = {
     var labelObjectDf = labelObjectDf1
