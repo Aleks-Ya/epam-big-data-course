@@ -35,45 +35,44 @@ object Main {
     var labelObjectDf: DataFrame = rddToDf(ss, labelObjectRdd)
       .withColumn(rawFeaturesCol, array())
 
-    labelObjectDf.foreach(row => {
-      val l = row.getSeq(0).length
-      assert(l == fieldsCount, l + "-" + row)
-    })
+//    labelObjectDf.foreach(row => {
+//      val l = row.getSeq(0).length
+//      assert(l == fieldsCount, l + "-" + row)
+//    })
 
     DescriptionParser.content = readDescriptions(ss)
-    assert(DescriptionParser.allFields.size == fieldsCount)
-    assert(DescriptionParser.categoricalFields.size == 16)
-    assert(DescriptionParser.numericFields.size == 34)
+//    assert(DescriptionParser.allFields.size == fieldsCount)
+//    assert(DescriptionParser.categoricalFields.size == 16)
+//    assert(DescriptionParser.numericFields.size == 34)
 
-    labelObjectDf = addCategoricalColumn(labelObjectDf)
-    //    labelObjectDf.cache
-    labelObjectDf.show
+    labelObjectDf = addCategoricalColumns(labelObjectDf)
+
 
     labelObjectDf = numericalToRawFeatures(labelObjectDf)
     //    labelObjectDf.cache
-    labelObjectDf.show
+//    labelObjectDf.show
 
     labelObjectDf = categoricalObjectToCategorical(labelObjectDf)
     //    labelObjectDf.cache
-    labelObjectDf.show
+//    labelObjectDf.show
 
     labelObjectDf = transformCategoricalToRawCategorical(labelObjectDf)
     //    labelObjectDf.cache
-    labelObjectDf.show
+//    labelObjectDf.show
 
     labelObjectDf = appendRawCategoricalToRawFeatures(labelObjectDf)
     //    labelObjectDf.cache
-    labelObjectDf.show
+//    labelObjectDf.show
 
     labelObjectDf = rawFeaturesToLabelledPoint(labelObjectDf)
     //    labelObjectDf.cache
-    labelObjectDf.show
+//    labelObjectDf.show
 
     labelObjectDf = dropUnusedColumns(labelObjectDf)
     log.info("Start to cache")
 
     labelObjectDf.cache
-    labelObjectDf.show
+//    labelObjectDf.show
 
     val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(labelObjectDf)
     //    trainingData.show(100, truncate = false)
@@ -110,14 +109,15 @@ object Main {
     ss
   }
 
-  private def addCategoricalColumn(labelObjectDf1: DataFrame) = {
-    log.info("Enter addCategoricalColumn")
+  private def addCategoricalColumns(labelObjectDf1: DataFrame) = {
+    log.info("Enter addCategoricalColumns")
     var labelObjectDf = labelObjectDf1
     DescriptionParser.categoricalFields.foreach { t =>
       val id = t._1.toInt - 1
       val colName = categoricalPrefix + id
       labelObjectDf = labelObjectDf.withColumn(colName, lit(-1))
     }
+//    labelObjectDf.show
     labelObjectDf
   }
 
@@ -129,11 +129,11 @@ object Main {
         val id = t._1.toInt - 1
         val valueStr = x(id)
         var value = Try(valueStr.toDouble).getOrElse({
-          log.warn(s"Can't parse Int: $valueStr. Use 0")
+//          log.warn(s"Can't parse Int: $valueStr. Use 0")
           0d
         })
         if (value.isNaN) {
-          log.warn("value is NaN. Use 0")
+//          log.warn("value is NaN. Use 0")
           value = 0d
         }
         result += value
@@ -151,11 +151,11 @@ object Main {
     var labelObjectDf = labelObjectDf1
 
     val objToCategorical: String => Seq[String] => Int = column => objects => {
-      assert(objects.size == fieldsCount, objects.size)
+//      assert(objects.size == fieldsCount, objects.size)
       val fieldId: Int = extractIdFromColumnName(column)
       val valueStr = objects(fieldId)
       val value = Try(valueStr.toInt).getOrElse({
-        log.warn(s"Can't parse Int: $valueStr. Use 0")
+//        log.warn(s"Can't parse Int: $valueStr. Use 0")
         0
       })
       if (value.isNaN) throw new RuntimeException("NAN")
@@ -225,7 +225,7 @@ object Main {
   private def evaluate(testData: Dataset[Row], model: LinearRegressionModel) = {
     log.info("Enter evaluate")
     val predictions = model.transform(testData)
-    predictions.show(100)
+//    predictions.show(100)
     val evaluator = new RegressionEvaluator()
       .setLabelCol(labelCol)
       .setPredictionCol("prediction")
@@ -237,12 +237,12 @@ object Main {
   private def splitInputData(labelledVectorsDf: DataFrame) = {
     log.info("Enter splitInputData")
     val labelledVectors = labelledVectorsDf.randomSplit(Array[Double](0.5, 0.5), 1L)
-    assert(labelledVectors.length == 2)
+//    assert(labelledVectors.length == 2)
     val trainingData = labelledVectors(0)
     val testData = labelledVectors(1)
-    log.info("Input data size = " + labelledVectorsDf.count)
-    log.info("Test data size = " + testData.count)
-    log.info("Training data size = " + trainingData.count)
+//    log.info("Input data size = " + labelledVectorsDf.count)
+//    log.info("Test data size = " + testData.count)
+//    log.info("Training data size = " + trainingData.count)
     (trainingData, testData)
   }
 
@@ -254,7 +254,7 @@ object Main {
     )
 
     val labelledVectorsDf = ss.createDataFrame(labelledVectorsRdd, schema)
-    labelledVectorsDf.show
+//    labelledVectorsDf.show
     labelledVectorsDf
   }
 
@@ -273,10 +273,10 @@ object Main {
       .map(line => line.replaceAll(",", "."))
       .map(line => line.split(";"))
     //    assert(vectorsRdd.count() == 15223)
-    vectorsRdd.zipWithIndex().foreach(t => {
-      val l = t._1.length
-      assert(l == fieldsCount, s"$l-${t._2}-${t._1.toList}")
-    })
+//    vectorsRdd.zipWithIndex().foreach(t => {
+//      val l = t._1.length
+//      assert(l == fieldsCount, s"$l-${t._2}-${t._1.toList}")
+//    })
     vectorsRdd
   }
 
