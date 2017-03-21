@@ -15,7 +15,7 @@ import scala.util.Try
 
 object Main {
   private val log = LoggerFactory.getLogger(getClass)
-  private val labelCol = "labels"
+  private val labelCol = "label"
   private val objectsCol = "objects"
   private val rawFeaturesCol = "rawFeatures"
   private val rawCategoricalCol = "rawCategorical"
@@ -71,10 +71,12 @@ object Main {
 
     labelObjectDf = dropUnusedColumns(labelObjectDf)
     log.info("Start to cache")
+
     labelObjectDf.cache
     labelObjectDf.show
 
     val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(labelObjectDf)
+    trainingData.show(100, truncate = false)
     val model: LinearRegressionModel = fitModel(trainingData)
     printSummary(model)
     evaluate(testData, model)
@@ -89,6 +91,7 @@ object Main {
       .foreach(column => labelObjectDf = labelObjectDf.drop(col(column)))
     labelObjectDf = labelObjectDf.drop(col(objectsCol))
     labelObjectDf = labelObjectDf.drop(col(rawFeaturesCol))
+    labelObjectDf = labelObjectDf.drop(col(rawCategoricalCol))
     labelObjectDf
   }
 
@@ -199,8 +202,8 @@ object Main {
   private def rawFeaturesToLabelledPoint(labelObjectDf1: DataFrame) = {
     log.info("Enter rawFeaturesToLabelledPoint")
     var labelObjectDf = labelObjectDf1
-    val udfFun: (Seq[Double], Int) => LabeledPoint = (rawFeatures, label) => {
-      LabeledPoint(label, Vectors.dense(rawFeatures.toArray))
+    val udfFun: (Seq[Double], Int) => org.apache.spark.ml.linalg.Vector = (rawFeatures, label) => {
+      Vectors.dense(rawFeatures.toArray[Double])
     }
     val udfObj = udf(udfFun)
     labelObjectDf = labelObjectDf.withColumn(featuresCol, udfObj(col(rawFeaturesCol), col(labelCol)))
@@ -254,7 +257,7 @@ object Main {
     log.info("Enter readLabels")
     val labelsPath = resourceToPath("Target.csv")
     val labelsRdd = ss.sparkContext.textFile(labelsPath).map(_.toInt)
-    assert(labelsRdd.count() == 15223)
+//    assert(labelsRdd.count() == 15223)
     labelsRdd
   }
 
@@ -264,7 +267,7 @@ object Main {
     val vectorsRdd = ss.sparkContext.textFile(vectorsPath)
       .map(line => line.replaceAll(",", "."))
       .map(line => line.split(";"))
-    assert(vectorsRdd.count() == 15223)
+//    assert(vectorsRdd.count() == 15223)
     vectorsRdd.zipWithIndex().foreach(t => {
       val l = t._1.length
       assert(l == fieldsCount, s"$l-${t._2}-${t._1.toList}")
