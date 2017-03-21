@@ -46,21 +46,32 @@ object Main {
     assert(DescriptionParser.numericFields.size == 34)
 
     labelObjectDf = addCategoricalColumn(labelObjectDf)
+    //    labelObjectDf.cache
     labelObjectDf.show
 
     labelObjectDf = numericalToRawFeatures(labelObjectDf)
+    //    labelObjectDf.cache
     labelObjectDf.show
 
     labelObjectDf = categoricalObjectToCategorical(labelObjectDf)
+    //    labelObjectDf.cache
     labelObjectDf.show
 
     labelObjectDf = transformCategoricalToRawCategorical(labelObjectDf)
+    //    labelObjectDf.cache
     labelObjectDf.show
 
     labelObjectDf = appendRawCategoricalToRawFeatures(labelObjectDf)
+    //    labelObjectDf.cache
     labelObjectDf.show
 
     labelObjectDf = rawFeaturesToLabelledPoint(labelObjectDf)
+    //    labelObjectDf.cache
+    labelObjectDf.show
+
+    labelObjectDf = dropUnusedColumns(labelObjectDf)
+    log.info("Start to cache")
+    labelObjectDf.cache
     labelObjectDf.show
 
     val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(labelObjectDf)
@@ -69,6 +80,18 @@ object Main {
     evaluate(testData, model)
     ss.close
   }
+
+  private def dropUnusedColumns(labelObjectDf1: DataFrame) = {
+    log.info("Enter dropUnusedColumns")
+    var labelObjectDf = labelObjectDf1
+    labelObjectDf.columns
+      .filter(col => col.startsWith(categoricalPrefix) || col.startsWith(rawCategoricalPrefix))
+      .foreach(column => labelObjectDf = labelObjectDf.drop(col(column)))
+    labelObjectDf = labelObjectDf.drop(col(objectsCol))
+    labelObjectDf = labelObjectDf.drop(col(rawFeaturesCol))
+    labelObjectDf
+  }
+
 
   private def initSparkSession = {
     val builder = SparkSession.builder().appName("Iablokov Lesson 4").master("local[1]")
@@ -85,6 +108,7 @@ object Main {
   }
 
   private def addCategoricalColumn(labelObjectDf1: DataFrame) = {
+    log.info("Enter addCategoricalColumn")
     var labelObjectDf = labelObjectDf1
     DescriptionParser.categoricalFields.foreach { t =>
       val id = t._1.toInt - 1
@@ -95,13 +119,14 @@ object Main {
   }
 
   private def numericalToRawFeatures(labelObjectDf: DataFrame) = {
+    log.info("Enter numericalToRawFeatures")
     val fillNumericalCols: Seq[String] => Seq[Double] = (x) => {
       val result = new ListBuffer[Double]()
       DescriptionParser.numericFields.map({ t =>
         val id = t._1.toInt - 1
         val valueStr = x(id)
         val value = Try(valueStr.toDouble).getOrElse({
-          log.warn(s"Can't parse Int: $valueStr. Use 0")
+          //          log.warn(s"Can't parse Int: $valueStr. Use 0")
           0d
         })
         result += value
@@ -115,6 +140,7 @@ object Main {
   }
 
   private def categoricalObjectToCategorical(labelObjectDf1: DataFrame) = {
+    log.info("Enter categoricalObjectToCategorical")
     var labelObjectDf = labelObjectDf1
 
     val objToCategorical: String => Seq[String] => Int = column => objects => {
@@ -122,7 +148,7 @@ object Main {
       val fieldId: Int = extractIdFromColumnName(column)
       val valueStr = objects(fieldId)
       val value = Try(valueStr.toInt).getOrElse({
-        log.warn(s"Can't parse Int: $valueStr. Use 0")
+        //        log.warn(s"Can't parse Int: $valueStr. Use 0")
         0
       })
       value
@@ -136,11 +162,11 @@ object Main {
   }
 
   private def transformCategoricalToRawCategorical(labelObjectDf1: DataFrame) = {
+    log.info("Enter transformCategoricalToRawCategorical")
     var labelObjectDf = labelObjectDf1
     labelObjectDf.columns.filter(col => col.startsWith(categoricalPrefix)).foreach(column => {
       val fieldId: Int = extractIdFromColumnName(column)
       val rawColumn = rawCategoricalPrefix + fieldId
-      log.info(s"InputCol: $column, OutputCol: $rawColumn")
       val encoder = new OneHotEncoder()
         .setInputCol(column)
         .setOutputCol(rawColumn)
@@ -155,6 +181,7 @@ object Main {
   }
 
   private def appendRawCategoricalToRawFeatures(labelObjectDf1: DataFrame) = {
+    log.info("Enter appendRawCategoricalToRawFeatures")
     var labelObjectDf = labelObjectDf1
     labelObjectDf = labelObjectDf.withColumn(rawCategoricalCol, lit(Array[Int]()))
     val fillCategoricalCols: String => (SparseVector, Seq[Double]) => Seq[Double] = column => (vector, rawFeatures) => {
@@ -170,9 +197,8 @@ object Main {
   }
 
   private def rawFeaturesToLabelledPoint(labelObjectDf1: DataFrame) = {
+    log.info("Enter rawFeaturesToLabelledPoint")
     var labelObjectDf = labelObjectDf1
-
-
     val udfFun: (Seq[Double], Int) => LabeledPoint = (rawFeatures, label) => {
       LabeledPoint(label, Vectors.dense(rawFeatures.toArray))
     }
@@ -181,36 +207,15 @@ object Main {
     labelObjectDf
   }
 
-  //  private def objectToVector(obj: Array[String])
-  //
-  //  = {
-  //    obj.zipWithIndex.foreach(tuple => {
-  //      val index = tuple._2
-  //      val value = tuple._1
-  //      val description = DescriptionParser.allFields(index)
-  //      description match {
-  //        case Category.Numeric => value.toDouble
-  //        case Category.Categorical =>
-  //      }
-  //      index match {
-  //        case 0 => value.toInt
-  //        case _ => throw new IllegalArgumentException("Unexpected index: " + index)
-  //      }
-  //    })
-  //  }
-
-  private def fitModel(trainingData: Dataset[Row])
-
-  = {
+  private def fitModel(trainingData: Dataset[Row]) = {
+    log.info("Enter fitModel")
     val maxIter = 10
     val estimator = new LinearRegression().setMaxIter(maxIter)
-    val model = estimator.fit(trainingData)
-    model
+    estimator.fit(trainingData)
   }
 
-  private def evaluate(testData: Dataset[Row], model: LinearRegressionModel)
-
-  = {
+  private def evaluate(testData: Dataset[Row], model: LinearRegressionModel) = {
+    log.info("Enter evaluate")
     val predictions = model.transform(testData)
     predictions.show(100)
     val evaluator = new RegressionEvaluator()
@@ -218,25 +223,23 @@ object Main {
       .setPredictionCol("prediction")
       .setMetricName("rmse")
     val rmse = evaluator.evaluate(predictions)
-    println(rmse)
+    log.info(rmse.toString)
   }
 
-  private def splitInputData(labelledVectorsDf: DataFrame)
-
-  = {
+  private def splitInputData(labelledVectorsDf: DataFrame) = {
+    log.info("Enter splitInputData")
     val labelledVectors = labelledVectorsDf.randomSplit(Array[Double](0.5, 0.5), 1L)
     assert(labelledVectors.length == 2)
     val trainingData = labelledVectors(0)
     val testData = labelledVectors(1)
-    println("Input data size = " + labelledVectorsDf.count)
-    println("Test data size = " + testData.count)
-    println("Training data size = " + trainingData.count)
+    log.info("Input data size = " + labelledVectorsDf.count)
+    log.info("Test data size = " + testData.count)
+    log.info("Training data size = " + trainingData.count)
     (trainingData, testData)
   }
 
-  private def rddToDf(ss: SparkSession, labelledVectorsRdd: RDD[Row])
-
-  = {
+  private def rddToDf(ss: SparkSession, labelledVectorsRdd: RDD[Row]) = {
+    log.info("Enter rddToDf")
     val schema = StructType(
       StructField(objectsCol, ArrayType(StringType), nullable = false) ::
         StructField(labelCol, IntegerType, nullable = false) :: Nil
@@ -247,18 +250,16 @@ object Main {
     labelledVectorsDf
   }
 
-  private def readLabels(ss: SparkSession)
-
-  = {
+  private def readLabels(ss: SparkSession) = {
+    log.info("Enter readLabels")
     val labelsPath = resourceToPath("Target.csv")
     val labelsRdd = ss.sparkContext.textFile(labelsPath).map(_.toInt)
     assert(labelsRdd.count() == 15223)
     labelsRdd
   }
 
-  private def readObjects(ss: SparkSession)
-
-  = {
+  private def readObjects(ss: SparkSession) = {
+    log.info("Enter readObjects")
     val vectorsPath = resourceToPath("Objects.csv")
     val vectorsRdd = ss.sparkContext.textFile(vectorsPath)
       .map(line => line.replaceAll(",", "."))
@@ -271,16 +272,14 @@ object Main {
     vectorsRdd
   }
 
-  private def readDescriptions(ss: SparkSession)
-
-  = {
+  private def readDescriptions(ss: SparkSession) = {
+    log.info("Enter readDescriptions")
     val path = resourceToPath("PropertyDesciptionEN.txt")
     ss.sparkContext.textFile(path).reduce(_ + "\n" + _)
   }
 
-  private def printSummary(model: LinearRegressionModel)
-
-  = {
+  private def printSummary(model: LinearRegressionModel) = {
+    log.info("Enter printSummary")
     val trainingSummary = model.summary
     println(s"numIterations: ${trainingSummary.totalIterations}")
     println(s"objectiveHistory: [${trainingSummary.objectiveHistory.mkString(",")}]")
@@ -289,9 +288,8 @@ object Main {
     trainingSummary.residuals.show()
   }
 
-  private def resourceToPath(resource: String)
-
-  = {
+  private def resourceToPath(resource: String) = {
+    log.info("Enter resourceToPath")
     val url = getClass.getClassLoader.getResource(resource)
     if (url == null) {
       throw new RuntimeException("Resource not found: " + resource)
