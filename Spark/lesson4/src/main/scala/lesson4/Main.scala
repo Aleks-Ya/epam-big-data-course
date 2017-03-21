@@ -1,7 +1,7 @@
 package lesson4
 
 import org.apache.spark.ml.evaluation.RegressionEvaluator
-import org.apache.spark.ml.feature.{LabeledPoint, OneHotEncoder}
+import org.apache.spark.ml.feature.OneHotEncoder
 import org.apache.spark.ml.linalg.{SparseVector, Vectors}
 import org.apache.spark.ml.regression.{LinearRegression, LinearRegressionModel}
 import org.apache.spark.rdd.RDD
@@ -76,7 +76,7 @@ object Main {
     labelObjectDf.show
 
     val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(labelObjectDf)
-    trainingData.show(100, truncate = false)
+    //    trainingData.show(100, truncate = false)
     val model: LinearRegressionModel = fitModel(trainingData)
     printSummary(model)
     evaluate(testData, model)
@@ -128,10 +128,14 @@ object Main {
       DescriptionParser.numericFields.map({ t =>
         val id = t._1.toInt - 1
         val valueStr = x(id)
-        val value = Try(valueStr.toDouble).getOrElse({
-          //          log.warn(s"Can't parse Int: $valueStr. Use 0")
+        var value = Try(valueStr.toDouble).getOrElse({
+          log.warn(s"Can't parse Int: $valueStr. Use 0")
           0d
         })
+        if (value.isNaN) {
+          log.warn("value is NaN. Use 0")
+          value = 0d
+        }
         result += value
       })
       result
@@ -151,9 +155,10 @@ object Main {
       val fieldId: Int = extractIdFromColumnName(column)
       val valueStr = objects(fieldId)
       val value = Try(valueStr.toInt).getOrElse({
-        //        log.warn(s"Can't parse Int: $valueStr. Use 0")
+        log.warn(s"Can't parse Int: $valueStr. Use 0")
         0
       })
+      if (value.isNaN) throw new RuntimeException("NAN")
       value
     }
 
@@ -257,7 +262,7 @@ object Main {
     log.info("Enter readLabels")
     val labelsPath = resourceToPath("Target.csv")
     val labelsRdd = ss.sparkContext.textFile(labelsPath).map(_.toInt)
-//    assert(labelsRdd.count() == 15223)
+    //    assert(labelsRdd.count() == 15223)
     labelsRdd
   }
 
@@ -267,7 +272,7 @@ object Main {
     val vectorsRdd = ss.sparkContext.textFile(vectorsPath)
       .map(line => line.replaceAll(",", "."))
       .map(line => line.split(";"))
-//    assert(vectorsRdd.count() == 15223)
+    //    assert(vectorsRdd.count() == 15223)
     vectorsRdd.zipWithIndex().foreach(t => {
       val l = t._1.length
       assert(l == fieldsCount, s"$l-${t._2}-${t._1.toList}")
