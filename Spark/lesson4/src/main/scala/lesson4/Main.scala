@@ -27,7 +27,8 @@ object Main {
   private val rawCategoricalPrefix = "rawCategorical_"
 
   def main(args: Array[String]): Unit = {
-    val ss = SparkSession.builder().appName("Iablokov Lesson 4").master("local[1]").getOrCreate()
+    val ss = initSparkSession
+
     val objectsRdd: RDD[Array[String]] = readObjects(ss)
     val labelsRdd: RDD[Int] = readLabels(ss)
     val labelObjectRdd = objectsRdd.zip(labelsRdd).map(tuple => Row(tuple._1, tuple._2))
@@ -62,65 +63,25 @@ object Main {
     labelObjectDf = rawFeaturesToLabelledPoint(labelObjectDf)
     labelObjectDf.show
 
-//    labelObjectDf.select(col(rawFeaturesCol)).take(10).foreach(println)
-
-
-    //    val splitFields: Array[String] => Unit = {
-    //      val categoricalFields = List
-    //      DescriptionParser.categoricalFields.map({ t =>
-    //        val id = t._1
-    //        val value = t._2
-    //
-    //      })
-    //    }
-
-    //      implicit val mapEncoder = org.apache.spark.sql.Encoders.kryo[Row]
-    //      labelObjectDf.map(objectRow => {
-    //        val fields = objectRow.getSeq[String](0)
-    //        val rawFeatures = objectRow.getSeq[Double](2)
-    //        fields.zipWithIndex.foreach(tuple => {
-    //          val index = tuple._2
-    //          val value = tuple._1
-    //          val description = DescriptionParser.allFields(index + 1)
-    //          description.category match {
-    //            case Category.Numeric => {
-    //              rawFeatures :+ value.toDouble
-    //            }
-    //            case _ => {
-    //            //          case Category.Categorical => labelObjectDf.col("rawCategorical_" + description.id)
-    //          }
-    //        })
-    //        Row(fields, objectRow.get(1), rawFeatures)
-    //      }).show
-
-
-    //    DescriptionParser.allFields.foreach(tuple => {
-    //
-    //    })
-    //    DescriptionParser.numericFields.foreach(tuple => {
-    //      labelObjectDf.withColumn("feature_" + tuple._1, lit(-1))
-    //    })
-    //    DescriptionParser.categoricalFields.foreach(tuple => {
-    //      labelObjectDf.withColumn("feature_" + tuple._1, lit())
-    //    })
-
-
-    //    labelObjectDf.map(row => {
-    //      val objects = row.getAs[Array[String]](objectsCol)
-    //      objects.zipWithIndex.foreach(tuple => {
-    //        val index = tuple._2
-    //        val value = tuple._1
-    //        val description = DescriptionParser.allFields(index)
-    //
-    //      })
-    //    })
-
-
-    //    val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(labelObjectDf)
-    //    val model: LinearRegressionModel = fitModel(trainingData)
-    //    printSummary(model)
-    //    evaluate(testData, model)
+    val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(labelObjectDf)
+    val model: LinearRegressionModel = fitModel(trainingData)
+    printSummary(model)
+    evaluate(testData, model)
     ss.close
+  }
+
+  private def initSparkSession = {
+    val builder = SparkSession.builder().appName("Iablokov Lesson 4").master("local[1]")
+
+    val logDir = sys.env.get("SPARK_HISTORY_FS_LOG_DIRECTORY")
+    if (logDir.isDefined) {
+      builder
+        .config("spark.eventLog.enabled", "true")
+        .config("spark.eventLog.dir", logDir.get)
+      println("Set event log dir: " + logDir.get)
+    }
+    val ss = builder.getOrCreate()
+    ss
   }
 
   private def addCategoricalColumn(labelObjectDf1: DataFrame) = {
