@@ -1,11 +1,11 @@
 package lesson4
 
 import org.apache.spark.ml.evaluation.RegressionEvaluator
-import org.apache.spark.ml.feature.OneHotEncoder
-import org.apache.spark.ml.linalg.SparseVector
+import org.apache.spark.ml.feature.{LabeledPoint, OneHotEncoder}
+import org.apache.spark.ml.linalg.{SparseVector, Vectors}
 import org.apache.spark.ml.regression.{LinearRegression, LinearRegressionModel}
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{udf, _}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.LoggerFactory
@@ -59,7 +59,10 @@ object Main {
     labelObjectDf = appendRawCategoricalToRawFeatures(labelObjectDf)
     labelObjectDf.show
 
-    labelObjectDf.select(col(rawFeaturesCol)).take(10).foreach(println)
+    labelObjectDf = rawFeaturesToLabelledPoint(labelObjectDf)
+    labelObjectDf.show
+
+//    labelObjectDf.select(col(rawFeaturesCol)).take(10).foreach(println)
 
 
     //    val splitFields: Array[String] => Unit = {
@@ -203,6 +206,18 @@ object Main {
       result = result.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(column), col(rawFeaturesCol)))
     })
     result
+  }
+
+  private def rawFeaturesToLabelledPoint(labelObjectDf1: DataFrame) = {
+    var labelObjectDf = labelObjectDf1
+
+
+    val udfFun: (Seq[Double], Int) => LabeledPoint = (rawFeatures, label) => {
+      LabeledPoint(label, Vectors.dense(rawFeatures.toArray))
+    }
+    val udfObj = udf(udfFun)
+    labelObjectDf = labelObjectDf.withColumn(featuresCol, udfObj(col(rawFeaturesCol), col(labelCol)))
+    labelObjectDf
   }
 
   //  private def objectToVector(obj: Array[String])
