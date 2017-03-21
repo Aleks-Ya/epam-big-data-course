@@ -3,7 +3,7 @@ package lesson4
 import lesson4.Category.Category
 import org.slf4j.LoggerFactory
 
-object DescriptionParser {
+case object DescriptionParser {
   private val log = LoggerFactory.getLogger(getClass)
   var content: String = _
   private val patternTitle = """^(\d+)\) (\w[,()'/\w\s]*): (\w+)$""".r
