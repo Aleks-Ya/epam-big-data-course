@@ -69,27 +69,7 @@ object Main {
     labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillNumericalColsUdf(col(objectsCol)))
     labelObjectDf.show
 
-    labelObjectDf = labelObjectDf.withColumn(rawCategoricalCol, lit(Array[Int]()))
-    val fillCategoricalCols: String => (Seq[String], Seq[Int]) => Seq[Int] = column => (objects, rawFeatures) => {
-      assert(objects.size == fieldsCount, objects.size)
-      log.info("Objects size: " + objects.length)
-      log.info("RawFeatures size: " + rawFeatures.length)
-      val fieldId = column.split("_")(1).toInt - 1
-      log.info("fieldsId: " + fieldId)
-      val valueStr = objects(fieldId)
-      val value = Try(valueStr.toInt).getOrElse({
-        log.warn(s"Can't parse Int: $valueStr. Use 0")
-        nanValue
-      })
-      val result = rawFeatures.toBuffer
-      result += value
-      result
-    }
-
-    labelObjectDf.columns.filter(col => col.startsWith("rawCategorical_")).foreach(column => {
-      val fillCategoricalColsUdf = udf(fillCategoricalCols(column))
-      labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(objectsCol), col(rawFeaturesCol)))
-    })
+    labelObjectDf = rawCategoricalToRawFeatures(labelObjectDf)
     labelObjectDf.show
 
     labelObjectDf.select(col(rawFeaturesCol)).take(10).foreach(println)
@@ -151,6 +131,32 @@ object Main {
     //    printSummary(model)
     //    evaluate(testData, model)
     ss.close
+  }
+
+  private def rawCategoricalToRawFeatures(labelObjectDf1: DataFrame) = {
+    var labelObjectDf = labelObjectDf1
+    labelObjectDf = labelObjectDf.withColumn(rawCategoricalCol, lit(Array[Int]()))
+    val fillCategoricalCols: String => (Seq[String], Seq[Int]) => Seq[Int] = column => (objects, rawFeatures) => {
+      assert(objects.size == fieldsCount, objects.size)
+      log.info("Objects size: " + objects.length)
+      log.info("RawFeatures size: " + rawFeatures.length)
+      val fieldId = column.split("_")(1).toInt - 1
+      log.info("fieldsId: " + fieldId)
+      val valueStr = objects(fieldId)
+      val value = Try(valueStr.toInt).getOrElse({
+        log.warn(s"Can't parse Int: $valueStr. Use 0")
+        nanValue
+      })
+      val result = rawFeatures.toBuffer
+      result += value
+      result
+    }
+
+    labelObjectDf.columns.filter(col => col.startsWith("rawCategorical_")).foreach(column => {
+      val fillCategoricalColsUdf = udf(fillCategoricalCols(column))
+      labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(objectsCol), col(rawFeaturesCol)))
+    })
+    labelObjectDf
   }
 
   private def objectToVector(obj: Array[String])
