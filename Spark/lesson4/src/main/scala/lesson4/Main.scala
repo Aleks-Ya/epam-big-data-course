@@ -1,6 +1,8 @@
 package lesson4
 
 import org.apache.spark.ml.evaluation.RegressionEvaluator
+import org.apache.spark.ml.feature.OneHotEncoder
+import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.regression.{LinearRegression, LinearRegressionModel}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
@@ -19,8 +21,6 @@ object Main {
   private val rawCategoricalCol = "rawCategorical"
   private val featuresCol = "features"
 
-  private val nanValue = 0
-
   private val fieldsCount = 50
 
   private val categoricalPrefix = "categorical_"
@@ -35,7 +35,7 @@ object Main {
       .withColumn(rawFeaturesCol, array())
 
     labelObjectDf.foreach(row => {
-      val l = row.getSeq(nanValue).length
+      val l = row.getSeq(0).length
       assert(l == fieldsCount, l + "-" + row)
     })
 
@@ -53,7 +53,10 @@ object Main {
     labelObjectDf = categoricalObjectToCategorical(labelObjectDf)
     labelObjectDf.show
 
-    labelObjectDf = rawCategoricalToRawFeatures(labelObjectDf)
+    labelObjectDf = transformCategoricalToRawCategorical(labelObjectDf)
+    labelObjectDf.show
+
+    labelObjectDf = appendRawCategoricalToRawFeatures(labelObjectDf)
     labelObjectDf.show
 
     labelObjectDf.select(col(rawFeaturesCol)).take(10).foreach(println)
@@ -128,14 +131,14 @@ object Main {
   }
 
   private def numericalToRawFeatures(labelObjectDf: DataFrame) = {
-    val fillNumericalCols: Seq[String] => Seq[Int] = (x) => {
-      val result = new ListBuffer[Int]()
+    val fillNumericalCols: Seq[String] => Seq[Double] = (x) => {
+      val result = new ListBuffer[Double]()
       DescriptionParser.numericFields.map({ t =>
         val id = t._1.toInt - 1
         val valueStr = x(id)
-        val value = Try(valueStr.toInt).getOrElse({
+        val value = Try(valueStr.toDouble).getOrElse({
           log.warn(s"Can't parse Int: $valueStr. Use 0")
-          nanValue
+          0d
         })
         result += value
       })
@@ -156,17 +159,28 @@ object Main {
       val valueStr = objects(fieldId)
       val value = Try(valueStr.toInt).getOrElse({
         log.warn(s"Can't parse Int: $valueStr. Use 0")
-        nanValue
+        0
       })
       value
     }
 
-
     labelObjectDf.columns.filter(col => col.startsWith(categoricalPrefix)).foreach(column => {
       val fillCategoricalColsUdf = udf(objToCategorical(column))
-      //      val fieldId: Int = extractIdFromColumnName(column)
-      //      val rawColumn = rawCategoricalPrefix + fieldId
       labelObjectDf = labelObjectDf.withColumn(column, fillCategoricalColsUdf(col(objectsCol)))
+    })
+    labelObjectDf
+  }
+
+  private def transformCategoricalToRawCategorical(labelObjectDf1: DataFrame) = {
+    var labelObjectDf = labelObjectDf1
+    labelObjectDf.columns.filter(col => col.startsWith(categoricalPrefix)).foreach(column => {
+      val fieldId: Int = extractIdFromColumnName(column)
+      val rawColumn = rawCategoricalPrefix + fieldId
+      log.info(s"InputCol: $column, OutputCol: $rawColumn")
+      val encoder = new OneHotEncoder()
+        .setInputCol(column)
+        .setOutputCol(rawColumn)
+      labelObjectDf = encoder.transform(labelObjectDf)
     })
     labelObjectDf
   }
@@ -176,46 +190,38 @@ object Main {
     fieldId
   }
 
-  private def rawCategoricalToRawFeatures(labelObjectDf1: DataFrame) = {
+  private def appendRawCategoricalToRawFeatures(labelObjectDf1: DataFrame) = {
     var labelObjectDf = labelObjectDf1
     labelObjectDf = labelObjectDf.withColumn(rawCategoricalCol, lit(Array[Int]()))
-    val fillCategoricalCols: String => (Seq[String], Seq[Int]) => Seq[Int] = column => (objects, rawFeatures) => {
-      assert(objects.size == fieldsCount, objects.size)
-      val fieldId: Int = extractIdFromColumnName(column)
-      val valueStr = objects(fieldId)
-      val value = Try(valueStr.toInt).getOrElse({
-        log.warn(s"Can't parse Int: $valueStr. Use 0")
-        nanValue
-      })
-      val result = rawFeatures.toBuffer
-      result += value
-      result
+    val fillCategoricalCols: String => (SparseVector, Seq[Double]) => Seq[Double] = column => (vector, rawFeatures) => {
+      rawFeatures.toBuffer ++= vector.toDense.toArray
     }
 
+    var result = labelObjectDf
     labelObjectDf.columns.filter(col => col.startsWith(rawCategoricalPrefix)).foreach(column => {
       val fillCategoricalColsUdf = udf(fillCategoricalCols(column))
-      labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(objectsCol), col(rawFeaturesCol)))
+      result = result.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(column), col(rawFeaturesCol)))
     })
-    labelObjectDf
+    result
   }
 
-  private def objectToVector(obj: Array[String])
-
-  = {
-    obj.zipWithIndex.foreach(tuple => {
-      val index = tuple._2
-      val value = tuple._1
-      val description = DescriptionParser.allFields(index)
-      description match {
-        case Category.Numeric => value.toDouble
-        case Category.Categorical =>
-      }
-      index match {
-        case `nanValue` => value.toInt
-        case _ => throw new IllegalArgumentException("Unexpected index: " + index)
-      }
-    })
-  }
+  //  private def objectToVector(obj: Array[String])
+  //
+  //  = {
+  //    obj.zipWithIndex.foreach(tuple => {
+  //      val index = tuple._2
+  //      val value = tuple._1
+  //      val description = DescriptionParser.allFields(index)
+  //      description match {
+  //        case Category.Numeric => value.toDouble
+  //        case Category.Categorical =>
+  //      }
+  //      index match {
+  //        case 0 => value.toInt
+  //        case _ => throw new IllegalArgumentException("Unexpected index: " + index)
+  //      }
+  //    })
+  //  }
 
   private def fitModel(trainingData: Dataset[Row])
 
@@ -244,7 +250,7 @@ object Main {
   = {
     val labelledVectors = labelledVectorsDf.randomSplit(Array[Double](0.5, 0.5), 1L)
     assert(labelledVectors.length == 2)
-    val trainingData = labelledVectors(nanValue)
+    val trainingData = labelledVectors(0)
     val testData = labelledVectors(1)
     println("Input data size = " + labelledVectorsDf.count)
     println("Test data size = " + testData.count)
