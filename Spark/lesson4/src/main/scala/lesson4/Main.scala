@@ -23,6 +23,9 @@ object Main {
 
   private val fieldsCount = 50
 
+  private val categoricalPrefix = "categorical_"
+  private val rawCategoricalPrefix = "rawCategorical_"
+
   def main(args: Array[String]): Unit = {
     val ss = SparkSession.builder().appName("Iablokov Lesson 4").master("local[1]").getOrCreate()
     val objectsRdd: RDD[Array[String]] = readObjects(ss)
@@ -41,16 +44,13 @@ object Main {
     assert(DescriptionParser.categoricalFields.size == 16)
     assert(DescriptionParser.numericFields.size == 34)
 
-    DescriptionParser.categoricalFields.foreach { t =>
-      val id = t._1.toInt - 1
-      log.info("Categorical id: " + id)
-      val colName = "rawCategorical_" + id
-      log.info("create column: " + colName)
-      labelObjectDf = labelObjectDf.withColumn(colName, lit(-1))
-    }
+    labelObjectDf = addCategoricalColumn(labelObjectDf)
     labelObjectDf.show
 
     labelObjectDf = numericalToRawFeatures(labelObjectDf)
+    labelObjectDf.show
+
+    labelObjectDf = categoricalObjectToCategorical(labelObjectDf)
     labelObjectDf.show
 
     labelObjectDf = rawCategoricalToRawFeatures(labelObjectDf)
@@ -117,6 +117,16 @@ object Main {
     ss.close
   }
 
+  private def addCategoricalColumn(labelObjectDf1: DataFrame) = {
+    var labelObjectDf = labelObjectDf1
+    DescriptionParser.categoricalFields.foreach { t =>
+      val id = t._1.toInt - 1
+      val colName = categoricalPrefix + id
+      labelObjectDf = labelObjectDf.withColumn(colName, lit(-1))
+    }
+    labelObjectDf
+  }
+
   private def numericalToRawFeatures(labelObjectDf: DataFrame) = {
     val fillNumericalCols: Seq[String] => Seq[Int] = (x) => {
       val result = new ListBuffer[Int]()
@@ -137,16 +147,41 @@ object Main {
     labelObjectDf.withColumn(rawFeaturesCol, fillNumericalColsUdf(col(objectsCol)))
   }
 
+  private def categoricalObjectToCategorical(labelObjectDf1: DataFrame) = {
+    var labelObjectDf = labelObjectDf1
+
+    val objToCategorical: String => Seq[String] => Int = column => objects => {
+      assert(objects.size == fieldsCount, objects.size)
+      val fieldId: Int = extractIdFromColumnName(column)
+      val valueStr = objects(fieldId)
+      val value = Try(valueStr.toInt).getOrElse({
+        log.warn(s"Can't parse Int: $valueStr. Use 0")
+        nanValue
+      })
+      value
+    }
+
+
+    labelObjectDf.columns.filter(col => col.startsWith(categoricalPrefix)).foreach(column => {
+      val fillCategoricalColsUdf = udf(objToCategorical(column))
+      //      val fieldId: Int = extractIdFromColumnName(column)
+      //      val rawColumn = rawCategoricalPrefix + fieldId
+      labelObjectDf = labelObjectDf.withColumn(column, fillCategoricalColsUdf(col(objectsCol)))
+    })
+    labelObjectDf
+  }
+
+  private def extractIdFromColumnName(column: String) = {
+    val fieldId = column.split("_")(1).toInt - 1
+    fieldId
+  }
 
   private def rawCategoricalToRawFeatures(labelObjectDf1: DataFrame) = {
     var labelObjectDf = labelObjectDf1
     labelObjectDf = labelObjectDf.withColumn(rawCategoricalCol, lit(Array[Int]()))
     val fillCategoricalCols: String => (Seq[String], Seq[Int]) => Seq[Int] = column => (objects, rawFeatures) => {
       assert(objects.size == fieldsCount, objects.size)
-      log.info("Objects size: " + objects.length)
-      log.info("RawFeatures size: " + rawFeatures.length)
-      val fieldId = column.split("_")(1).toInt - 1
-      log.info("fieldsId: " + fieldId)
+      val fieldId: Int = extractIdFromColumnName(column)
       val valueStr = objects(fieldId)
       val value = Try(valueStr.toInt).getOrElse({
         log.warn(s"Can't parse Int: $valueStr. Use 0")
@@ -157,7 +192,7 @@ object Main {
       result
     }
 
-    labelObjectDf.columns.filter(col => col.startsWith("rawCategorical_")).foreach(column => {
+    labelObjectDf.columns.filter(col => col.startsWith(rawCategoricalPrefix)).foreach(column => {
       val fillCategoricalColsUdf = udf(fillCategoricalCols(column))
       labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(objectsCol), col(rawFeaturesCol)))
     })
