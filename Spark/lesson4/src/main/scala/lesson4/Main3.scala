@@ -14,7 +14,6 @@ import scala.util.Try
 object Main3 {
   private val log = LoggerFactory.getLogger(getClass)
   private val labelCol = "label"
-  private val objectsCol = "objects"
   private val featuresCol = "features"
   private val categoricalCol = "categorical"
   private val categoricalVectorCol = "categoricalVector"
@@ -48,7 +47,7 @@ object Main3 {
         .map(t => parseDouble(t._1))
       (objId, features)
     })
-    featureRdd.foreach(t => println(t._1 + " - " + t._2.toList))
+    featureRdd.take(50).foreach(t => println(t._1 + " - " + t._2.toList))
 
     val schema = StructType(
       StructField(objectIdCol, LongType) ::
@@ -107,7 +106,7 @@ object Main3 {
 
   private def fitModel(trainingData: Dataset[Row]) = {
     log.info("Enter fitModel")
-    val maxIter = 10
+    val maxIter = 100
     val estimator = new LinearRegression().setMaxIter(maxIter)
     estimator.fit(trainingData)
   }
@@ -115,7 +114,7 @@ object Main3 {
   private def evaluate(testData: Dataset[Row], model: LinearRegressionModel) = {
     log.info("Enter evaluate")
     val predictions = model.transform(testData)
-    //    predictions.show(100)
+        predictions.show(100)
     val evaluator = new RegressionEvaluator()
       .setLabelCol(labelCol)
       .setPredictionCol("prediction")
@@ -134,18 +133,6 @@ object Main3 {
     //    log.info("Test data size = " + testData.count)
     //    log.info("Training data size = " + trainingData.count)
     (trainingData, testData)
-  }
-
-  private def rddToDf(ss: SparkSession, labelledVectorsRdd: RDD[Row]) = {
-    log.info("Enter rddToDf")
-    val schema = StructType(
-      StructField(objectsCol, ArrayType(StringType), nullable = false) ::
-        StructField(labelCol, IntegerType, nullable = false) :: Nil
-    )
-
-    val labelledVectorsDf = ss.createDataFrame(labelledVectorsRdd, schema)
-    //    labelledVectorsDf.show
-    labelledVectorsDf
   }
 
   private def printSummary(model: LinearRegressionModel) = {
