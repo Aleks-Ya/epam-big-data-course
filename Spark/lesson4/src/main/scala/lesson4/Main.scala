@@ -125,26 +125,7 @@ object Main {
 
   private def numericalToRawFeatures(labelObjectDf: DataFrame) = {
     log.info("Enter numericalToRawFeatures")
-    val fillNumericalCols: Seq[String] => Seq[Double] = (x) => {
-      val result = new ListBuffer[Double]()
-      DescriptionParser.numericFields.map({ t =>
-        val id = t._1.toInt - 1
-        val valueStr = x(id)
-        var value = Try(valueStr.toDouble).getOrElse({
-//          log.warn(s"Can't parse Int: $valueStr. Use 0")
-          0d
-        })
-        if (value.isNaN) {
-//          log.warn("value is NaN. Use 0")
-          value = 0d
-        }
-        result += value
-      })
-      result
-    }
-
-    val fillNumericalColsUdf = udf(fillNumericalCols)
-
+    val fillNumericalColsUdf = udf(UdfFunctions.numericalToRawFeatures)
     labelObjectDf.withColumn(rawFeaturesCol, fillNumericalColsUdf(col(objectsCol)))
   }
 
@@ -152,20 +133,8 @@ object Main {
     log.info("Enter categoricalObjectToCategorical")
     var labelObjectDf = labelObjectDf1
 
-    val objToCategorical: String => Seq[String] => Int = column => objects => {
-//      assert(objects.size == fieldsCount, objects.size)
-      val fieldId: Int = extractIdFromColumnName(column)
-      val valueStr = objects(fieldId)
-      val value = Try(valueStr.toInt).getOrElse({
-//        log.warn(s"Can't parse Int: $valueStr. Use 0")
-        0
-      })
-      if (value.isNaN) throw new RuntimeException("NAN")
-      value
-    }
-
     labelObjectDf.columns.filter(col => col.startsWith(categoricalPrefix)).foreach(column => {
-      val fillCategoricalColsUdf = udf(objToCategorical(column))
+      val fillCategoricalColsUdf = udf(UdfFunctions.categoricalObjectToCategorical(column))
       labelObjectDf = labelObjectDf.withColumn(column, fillCategoricalColsUdf(col(objectsCol)))
     })
     labelObjectDf
@@ -175,7 +144,7 @@ object Main {
     log.info("Enter transformCategoricalToRawCategorical")
     var labelObjectDf = labelObjectDf1
     labelObjectDf.columns.filter(col => col.startsWith(categoricalPrefix)).foreach(column => {
-      val fieldId: Int = extractIdFromColumnName(column)
+      val fieldId: Int = UdfFunctions.extractIdFromColumnName(column)
       val rawColumn = rawCategoricalPrefix + fieldId
       val encoder = new OneHotEncoder()
         .setInputCol(column)
@@ -185,22 +154,14 @@ object Main {
     labelObjectDf
   }
 
-  private def extractIdFromColumnName(column: String) = {
-    val fieldId = column.split("_")(1).toInt - 1
-    fieldId
-  }
-
   private def appendRawCategoricalToRawFeatures(labelObjectDf1: DataFrame) = {
     log.info("Enter appendRawCategoricalToRawFeatures")
     var labelObjectDf = labelObjectDf1
     labelObjectDf = labelObjectDf.withColumn(rawCategoricalCol, lit(Array[Int]()))
-    val fillCategoricalCols: String => (SparseVector, Seq[Double]) => Seq[Double] = column => (vector, rawFeatures) => {
-      rawFeatures.toBuffer ++= vector.toDense.toArray
-    }
 
     var result = labelObjectDf
     labelObjectDf.columns.filter(col => col.startsWith(rawCategoricalPrefix)).foreach(column => {
-      val fillCategoricalColsUdf = udf(fillCategoricalCols(column))
+      val fillCategoricalColsUdf = udf(UdfFunctions.appendRawCategoricalToRawFeatures(column))
       result = result.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(column), col(rawFeaturesCol)))
     })
     result
@@ -209,10 +170,7 @@ object Main {
   private def rawFeaturesToLabelledPoint(labelObjectDf1: DataFrame) = {
     log.info("Enter rawFeaturesToLabelledPoint")
     var labelObjectDf = labelObjectDf1
-    val udfFun: (Seq[Double], Int) => org.apache.spark.ml.linalg.Vector = (rawFeatures, label) => {
-      Vectors.dense(rawFeatures.toArray[Double])
-    }
-    val udfObj = udf(udfFun)
+    val udfObj = udf(UdfFunctions.rawFeaturesToLabelledPoint)
     labelObjectDf = labelObjectDf.withColumn(featuresCol, udfObj(col(rawFeaturesCol), col(labelCol)))
     labelObjectDf
   }
