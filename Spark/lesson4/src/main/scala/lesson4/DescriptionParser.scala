@@ -24,7 +24,7 @@ class DescriptionParser(content: String) extends Serializable {
       val titleMatchesOpt = patternTitle.findFirstMatchIn(titleLine)
       if (titleMatchesOpt.nonEmpty) {
         val titleMatches = titleMatchesOpt.get
-        val id = titleMatches.group(1).toInt
+        val id = titleMatches.group(1).toInt - 1
         val title = titleMatches.group(2)
         val category = Category.fromString(titleMatches.group(3))
 
