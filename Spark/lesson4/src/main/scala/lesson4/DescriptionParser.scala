@@ -48,9 +48,9 @@ class DescriptionParser(content: String) extends Serializable {
       }
     }.filter(_ != null).toMap
     log.info("Properties map size: " + propertiesMap.size)
-    if (propertiesMap.contains(51)) {
+    if (propertiesMap.contains(50)) {
       val mutable = collection.mutable.Map(propertiesMap.toSeq: _*)
-      mutable.remove(51)
+      mutable.remove(50)
       return Map(mutable.toSeq: _*)
     }
     propertiesMap

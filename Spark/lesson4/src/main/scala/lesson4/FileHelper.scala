@@ -12,7 +12,7 @@ object FileHelper {
   def readDescriptions: String = {
     log.info("Enter readDescriptions")
     val path = resourceToPath("PropertyDesciptionEN.txt")
-    Source.fromFile(path).mkString
+    Source.fromFile(path).getLines.mkString("\n")
   }
 
   private def resourceToPath(resource: String) = {
@@ -21,7 +21,7 @@ object FileHelper {
     if (url == null) {
       throw new RuntimeException("Resource not found: " + resource)
     }
-    val path = url.toString
+    val path = url.getFile
     log.info("Path to resource: " + path)
     path
   }

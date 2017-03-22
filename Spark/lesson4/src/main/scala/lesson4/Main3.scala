@@ -2,34 +2,26 @@ package lesson4
 
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.feature.OneHotEncoder
+import org.apache.spark.ml.linalg.{VectorUDTPublic, Vectors}
 import org.apache.spark.ml.regression.{LinearRegression, LinearRegressionModel}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.sql.functions.{udf, _}
 import org.apache.spark.sql.types._
-import org.apache.spark.util.SizeEstimator
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 object Main3 {
   private val log = LoggerFactory.getLogger(getClass)
   private val labelCol = "label"
   private val objectsCol = "objects"
-  //  private val rawFeaturesCol = "rawFeatures"
   private val featuresCol = "features"
-
-  private val fieldsCount = 50
-
   private val categoricalCol = "categorical"
   private val categoricalVectorCol = "categoricalVector"
-  private val categoricalPrefix = "categorical_"
-  private val rawCategoricalPrefix = "rawCategorical_"
+  private val objectIdCol = "objectId"
 
   def main(args: Array[String]): Unit = {
     val ss = SparkHelper.ss
-
 
     val descriptions = new DescriptionParser(FileHelper.readDescriptions)
 
@@ -48,8 +40,7 @@ object Main3 {
       value
     }
 
-
-    val featureRdd: RDD[(Long, Array[Double])] = objectsRdd.map(t => {
+    var featureRdd: RDD[(Long, Array[Double])] = objectsRdd.map(t => {
       val objId = t._1
       val objValues = t._2
       val features = objValues.zipWithIndex
@@ -57,165 +48,61 @@ object Main3 {
         .map(t => parseDouble(t._1))
       (objId, features)
     })
+    featureRdd.foreach(t => println(t._1 + " - " + t._2.toList))
+
+    val schema = StructType(
+      StructField(objectIdCol, LongType) ::
+        StructField(categoricalCol, DoubleType) :: Nil)
+
+    descriptions.categoricalFields.foreach(fieldTuple => {
+      val categoricalRdd = objectsRdd.map(objTuple => {
+        val objId = objTuple._1
+        val fieldId = fieldTuple._1
+        val fieldValue = objTuple._2.zipWithIndex.map(_.swap).toMap.get(fieldId).get
+        val double = parseDouble(fieldValue)
+        Row(objId, double)
+      })
+      val df = SparkHelper.ss.createDataFrame(categoricalRdd, schema)
+      df.show
+      val encoder = new OneHotEncoder().setInputCol(categoricalCol).setOutputCol(categoricalVectorCol)
+      val transformedDf = encoder.transform(df)
+      transformedDf.show
+
+      implicit val mapEncoder = org.apache.spark.sql.Encoders.kryo[(Long, org.apache.spark.ml.linalg.Vector)]
+      val categoricalVectorRdd = transformedDf.map(row => {
+        val objectIdColInx = row.fieldIndex(objectIdCol)
+        val categoricalVectorColIdx = row.fieldIndex(categoricalVectorCol)
+        (row.getLong(objectIdColInx), row.getAs[org.apache.spark.ml.linalg.Vector](categoricalVectorColIdx))
+      }).rdd
+
+      featureRdd = featureRdd.zip(categoricalVectorRdd).map(t => {
+        assert(t._1._1 == t._2._1)
+        val objId = t._1._1
+        val featureArr = t._1._2.toBuffer
+        val joinedFeatures = featureArr ++= t._2._2.toArray
+        (objId, joinedFeatures.toArray)
+      })
+    })
+
+    val vectorRdd: RDD[(Long, org.apache.spark.ml.linalg.Vector)] = featureRdd.map(t => (t._1, Vectors.dense(t._2)))
+    vectorRdd.foreach(t => println(t._1 + " - " + t._2))
+
+    val labelsRdd: RDD[(Long, Int)] = FileHelper.readLabels(ss).zipWithIndex().map(_.swap)
+
+    val labelVectorRdd = vectorRdd.join(labelsRdd).map(t => Row(t._2._2, t._2._1))
+
+    val schema2 = StructType(
+      StructField(labelCol, IntegerType) ::
+        StructField(featuresCol, VectorUDTPublic) :: Nil)
 
 
+    val labelVectorDf = SparkHelper.ss.createDataFrame(labelVectorRdd, schema2)
 
-
-
-
-    val labelsRdd: RDD[Int] = FileHelper.readLabels(ss)
-    val labelObjectRdd = objectsRdd.zip(labelsRdd).map(tuple => Row(tuple._1, tuple._2))
-    var df: DataFrame = rddToDf(ss, labelObjectRdd)
-      .withColumn(featuresCol, lit(null))
-      .withColumn(categoricalCol, lit(null))
-      .withColumn(categoricalVectorCol, lit(null))
-    df.show
-
-
-    implicit val mapEncoder = org.apache.spark.sql.Encoders.kryo[Row]
-    df = df.map(row => {
-      val objectsColInd = row.fieldIndex(objectsCol)
-      val featuresColInd = row.fieldIndex(featuresCol)
-      val features = UdfFunctions.numericalToRawFeatures(descriptions)(row.getSeq[String](objectsColInd))
-
-      val rowSeq = row.toSeq.toBuffer
-      rowSeq(featuresColInd) = features
-      Row(rowSeq)
-    }).toDF("objects", "label", "features", "categorical", "categoricalVector")
-    df.show
-
-    UdfFunctions.numericalToRawFeatures(descriptions)
-    df = numericalToRawFeatures(descriptions, df)
-    //    labelObjectDf.show
-
-    df = categoricalObjectToCategorical(df)
-    //    labelObjectDf.cache
-    //    labelObjectDf.show
-
-    df = transformCategoricalToRawCategorical(df)
-    //    labelObjectDf.cache
-    //    labelObjectDf.show
-
-    df = appendRawCategoricalToRawFeatures(df)
-    //    labelObjectDf.cache
-    //    labelObjectDf.show
-
-    df = rawFeaturesToLabelledPoint(df)
-    //    labelObjectDf.cache
-    //    labelObjectDf.show
-
-    log.info("Size before columns drop: " + SizeEstimator.estimate(df))
-    df = dropUnusedColumns(df)
-    log.info("Start to cache")
-
-    df.cache
-    df.explain(extended = true)
-    log.info("Size after caching: " + SizeEstimator.estimate(df))
-    val featureCount = df.select(featuresCol)
-      .first
-      .get(0)
-      .asInstanceOf[org.apache.spark.ml.linalg.Vector]
-      .size
-    log.info("Feature count: " + featureCount)
-    //    labelObjectDf.show
-
-    val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(df)
-    //    trainingData.show(100, truncate = false)
+    val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(labelVectorDf)
     val model: LinearRegressionModel = fitModel(trainingData)
     printSummary(model)
     evaluate(testData, model)
     ss.close
-  }
-
-  private def dropUnusedColumns(labelObjectDf1: DataFrame) = {
-    log.info("Enter dropUnusedColumns")
-    var labelObjectDf = labelObjectDf1
-    labelObjectDf.columns
-      .filter(col => col.startsWith(categoricalPrefix) || col.startsWith(rawCategoricalPrefix))
-      .foreach(column => labelObjectDf = labelObjectDf.drop(col(column)))
-    labelObjectDf = labelObjectDf.drop(col(objectsCol))
-    labelObjectDf = labelObjectDf.drop(col(featuresCol))
-    labelObjectDf
-  }
-
-  private def addCategoricalColumns(descriptionParser: DescriptionParser, labelObjectDf1: DataFrame) = {
-    log.info("Enter addCategoricalColumns")
-    var labelObjectDf = labelObjectDf1
-    descriptionParser.categoricalFields.foreach { t =>
-      val id = t._1.toInt - 1
-      val colName = categoricalPrefix + id
-      labelObjectDf = labelObjectDf.withColumn(colName, lit(-1))
-    }
-    //    labelObjectDf.show
-    labelObjectDf
-  }
-
-  private def numericalToRawFeatures(descriptionParser: DescriptionParser, labelObjectDf: DataFrame) = {
-    log.info("Enter numericalToRawFeatures")
-    val fillNumericalColsUdf = udf(UdfFunctions.numericalToRawFeatures(descriptionParser))
-    labelObjectDf.withColumn(featuresCol, fillNumericalColsUdf(col(objectsCol)))
-  }
-
-  private def categoricalObjectToCategorical(labelObjectDf1: DataFrame) = {
-    log.info("Enter categoricalObjectToCategorical")
-    var labelObjectDf = labelObjectDf1
-
-    labelObjectDf.columns.filter(col => col.startsWith(categoricalPrefix)).foreach(column => {
-      val fillCategoricalColsUdf = udf(UdfFunctions.categoricalObjectToCategorical(column))
-      labelObjectDf = labelObjectDf.withColumn(column, fillCategoricalColsUdf(col(objectsCol)))
-    })
-    labelObjectDf
-  }
-
-  private def transformCategoricalToRawCategorical(labelObjectDf1: DataFrame) = {
-    log.info("Enter transformCategoricalToRawCategorical")
-    var labelObjectDf = labelObjectDf1
-    labelObjectDf.columns.filter(col => col.startsWith(categoricalPrefix)).foreach(column => {
-      val fieldId: Int = UdfFunctions.extractIdFromColumnName(column)
-      val rawColumn = rawCategoricalPrefix + fieldId
-      val encoder = new OneHotEncoder()
-        .setInputCol(column)
-        .setOutputCol(rawColumn)
-      labelObjectDf = encoder.transform(labelObjectDf)
-    })
-    labelObjectDf
-  }
-
-  private def appendRawCategoricalToRawFeatures(labelObjectDf1: DataFrame) = {
-    log.info("Enter appendRawCategoricalToRawFeatures")
-    var labelObjectDf = labelObjectDf1
-
-    labelObjectDf.columns.filter(col => col.startsWith(rawCategoricalPrefix)).foreach(rawCategoricalColumn => {
-      log.debug("Process rawCategoricalColumn: " + rawCategoricalColumn)
-      //      val fillCategoricalColsUdf = udf(UdfFunctions.appendRawCategoricalToRawFeatures)
-      //      labelObjectDf.select(rawFeaturesCol).foreach(row => println(row))
-      //      labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(rawCategoricalColumn), col(rawFeaturesCol)))
-      val sql = SparkHelper.ss.sqlContext
-      implicit val mapEncoder = org.apache.spark.sql.Encoders.kryo[Row]
-      log.debug("labelObjectDf size: " + labelObjectDf.count())
-      labelObjectDf = labelObjectDf.map(row => {
-        val rawFeaturesIndex = row.fieldIndex(featuresCol)
-        val vectorCat = row.getAs[org.apache.spark.ml.linalg.Vector](rawCategoricalColumn)
-        //        val vector = row.getAs[org.apache.spark.ml.linalg.Vector](rawFeaturesCol)
-        val rawFeatures = row.getSeq[Double](rawFeaturesIndex)
-        val res = ListBuffer[Double]()
-        res ++= rawFeatures
-        res ++= vectorCat.toDense.toArray
-        val newRowArray = row.toSeq.toBuffer
-        newRowArray(rawFeaturesIndex) = res.toList
-        //        RowFactory.create(newRowArray)
-        Row(newRowArray)
-      })
-    })
-    labelObjectDf
-  }
-
-  private def rawFeaturesToLabelledPoint(labelObjectDf1: DataFrame) = {
-    log.info("Enter rawFeaturesToLabelledPoint")
-    var labelObjectDf = labelObjectDf1
-    val udfObj = udf(UdfFunctions.rawFeaturesToVector)
-    labelObjectDf = labelObjectDf.withColumn(featuresCol, udfObj(col(featuresCol)))
-    labelObjectDf
   }
 
   private def fitModel(trainingData: Dataset[Row]) = {
@@ -260,7 +147,6 @@ object Main3 {
     //    labelledVectorsDf.show
     labelledVectorsDf
   }
-
 
   private def printSummary(model: LinearRegressionModel) = {
     log.info("Enter printSummary")
