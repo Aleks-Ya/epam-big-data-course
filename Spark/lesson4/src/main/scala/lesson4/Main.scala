@@ -149,7 +149,7 @@ object Main {
   private def rawFeaturesToLabelledPoint(labelObjectDf1: DataFrame) = {
     log.info("Enter rawFeaturesToLabelledPoint")
     var labelObjectDf = labelObjectDf1
-    val udfObj = udf(UdfFunctions.rawFeaturesToLabelledPoint)
+    val udfObj = udf(UdfFunctions.rawFeaturesToVector)
     labelObjectDf = labelObjectDf.withColumn(featuresCol, udfObj(col(rawFeaturesCol), col(labelCol)))
     labelObjectDf
   }

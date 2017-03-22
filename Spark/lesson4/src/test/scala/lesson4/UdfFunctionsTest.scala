@@ -25,10 +25,16 @@ class UdfFunctionsTest extends FlatSpec with Matchers {
     res shouldEqual 102
   }
 
-  it should "append value of raw categorical feature to all fetures" in {
+  it should "append value of raw categorical feature to all features" in {
     val vector = Vectors.dense(1d, 2d)
     val s = Seq(3d, 4d)
     val res = UdfFunctions.appendRawCategoricalToRawFeatures(vector, s)
     res should contain inOrder(1, 2, 3, 4)
+  }
+
+  it should "cover array to Vector" in {
+    val s = Seq(1d, 2d)
+    val res = UdfFunctions.rawFeaturesToVector(s)
+    res shouldEqual Vectors.dense(1d, 2d)
   }
 }

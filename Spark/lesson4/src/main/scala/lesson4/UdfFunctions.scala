@@ -1,6 +1,6 @@
 package lesson4
 
-import org.apache.spark.ml.linalg.{SparseVector, Vectors}
+import org.apache.spark.ml.linalg.Vectors
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
@@ -48,7 +48,7 @@ object UdfFunctions {
     res.toList
   }
 
-  val rawFeaturesToLabelledPoint: (Seq[Double], Int) => org.apache.spark.ml.linalg.Vector = (rawFeatures, label) => {
+  val rawFeaturesToVector: Seq[Double] => org.apache.spark.ml.linalg.Vector = rawFeatures => {
     Vectors.dense(rawFeatures.toArray[Double])
   }
 
