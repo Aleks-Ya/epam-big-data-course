@@ -72,6 +72,7 @@ object Main {
     log.info("Start to cache")
 
     labelObjectDf.cache
+    labelObjectDf.explain(extended = true)
 //    labelObjectDf.show
 
     val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(labelObjectDf)
@@ -96,6 +97,7 @@ object Main {
 
 
   private def initSparkSession = {
+    //TODO use >1 cores
     val builder = SparkSession.builder().appName("Iablokov Lesson 4").master("local[1]")
 
     val logDir = sys.env.get("SPARK_HISTORY_FS_LOG_DIRECTORY")
