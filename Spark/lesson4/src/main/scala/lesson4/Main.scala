@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory
 
 import scala.util.Try
 
-object Main3 {
+object Main {
   private val log = LoggerFactory.getLogger(getClass)
   private val labelCol = "label"
   private val featuresCol = "features"
@@ -24,20 +24,7 @@ object Main3 {
 
     val descriptions = new DescriptionParser(FileHelper.readDescriptions)
 
-    val objectsRdd: RDD[(Long, Array[String])] = FileHelper.readObjects(ss)
-      .zipWithIndex().map(_.swap)
-
-    def parseDouble(s: String): Double = {
-      var value = Try(s.toDouble).getOrElse({
-        //          log.warn(s"Can't parse Int: $valueStr. Use 0")
-        0d
-      })
-      if (value.isNaN) {
-        //          log.warn("value is NaN. Use 0")
-        value = 0d
-      }
-      value
-    }
+    val objectsRdd: RDD[(Long, Array[String])] = FileHelper.readObjects(ss).zipWithIndex.map(_.swap)
 
     var featureRdd: RDD[(Long, Array[Double])] = objectsRdd.map(t => {
       val objId = t._1
@@ -47,7 +34,7 @@ object Main3 {
         .map(t => parseDouble(t._1))
       (objId, features)
     })
-    featureRdd.take(50).foreach(t => println(t._1 + " - " + t._2.toList))
+    featureRdd.take(10).foreach(t => println(t._1 + " - " + t._2.toList))
 
     val schema = StructType(
       StructField(objectIdCol, LongType) ::
@@ -62,7 +49,6 @@ object Main3 {
         Row(objId, double)
       })
       val df = SparkHelper.ss.createDataFrame(categoricalRdd, schema)
-      df.show
       val encoder = new OneHotEncoder().setInputCol(categoricalCol).setOutputCol(categoricalVectorCol)
       val transformedDf = encoder.transform(df)
       transformedDf.show
@@ -84,7 +70,7 @@ object Main3 {
     })
 
     val vectorRdd: RDD[(Long, org.apache.spark.ml.linalg.Vector)] = featureRdd.map(t => (t._1, Vectors.dense(t._2)))
-    vectorRdd.foreach(t => println(t._1 + " - " + t._2))
+//    vectorRdd.take(5).foreach(t => println(t._1 + " - " + t._2))
 
     val labelsRdd: RDD[(Long, Int)] = FileHelper.readLabels(ss).zipWithIndex().map(_.swap)
 
@@ -114,7 +100,7 @@ object Main3 {
   private def evaluate(testData: Dataset[Row], model: LinearRegressionModel) = {
     log.info("Enter evaluate")
     val predictions = model.transform(testData)
-        predictions.show(100)
+    predictions.show(100)
     val evaluator = new RegressionEvaluator()
       .setLabelCol(labelCol)
       .setPredictionCol("prediction")
@@ -143,6 +129,18 @@ object Main3 {
     println(s"RMSE: ${trainingSummary.rootMeanSquaredError}")
     println(s"r2: ${trainingSummary.r2}")
     trainingSummary.residuals.show()
+  }
+
+  def parseDouble(s: String): Double = {
+    var value = Try(s.toDouble).getOrElse({
+      //          log.warn(s"Can't parse Int: $valueStr. Use 0")
+      0d
+    })
+    if (value.isNaN) {
+      //          log.warn("value is NaN. Use 0")
+      value = 0d
+    }
+    value
   }
 
 }

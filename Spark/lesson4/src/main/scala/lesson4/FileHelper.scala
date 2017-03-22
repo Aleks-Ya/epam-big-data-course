@@ -30,7 +30,6 @@ object FileHelper {
     log.info("Enter readLabels")
     val labelsPath = resourceToPath("Target.csv")
     val labelsRdd = ss.sparkContext.textFile(labelsPath).map(_.toInt)
-    //    assert(labelsRdd.count() == 15223)
     labelsRdd
   }
 
@@ -40,11 +39,6 @@ object FileHelper {
     val vectorsRdd = ss.sparkContext.textFile(vectorsPath)
       .map(line => line.replaceAll(",", "."))
       .map(line => line.split(";"))
-    //    assert(vectorsRdd.count() == 15223)
-    //    vectorsRdd.zipWithIndex().foreach(t => {
-    //      val l = t._1.length
-    //      assert(l == fieldsCount, s"$l-${t._2}-${t._1.toList}")
-    //    })
     vectorsRdd
   }
 

@@ -16,8 +16,7 @@ object SparkHelper {
         .config("spark.eventLog.dir", logDir.get)
       println("Set event log dir: " + logDir.get)
     }
-    val ss = builder.getOrCreate()
-    ss
+    builder.getOrCreate()
   }
 
 }
