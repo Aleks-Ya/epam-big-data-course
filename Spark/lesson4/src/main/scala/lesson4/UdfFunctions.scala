@@ -41,8 +41,11 @@ object UdfFunctions {
     fieldId
   }
 
-  val appendRawCategoricalToRawFeatures: String => (SparseVector, Seq[Double]) => Seq[Double] = column => (vector, rawFeatures) => {
-    rawFeatures.toBuffer ++= vector.toDense.toArray
+  val appendRawCategoricalToRawFeatures: (org.apache.spark.ml.linalg.Vector, Seq[Double]) => Seq[Double] = (vector, rawFeatures) => {
+    val res = ListBuffer[Double]()
+    res ++= vector.toDense.toArray
+    res ++= rawFeatures
+    res.toList
   }
 
   val rawFeaturesToLabelledPoint: (Seq[Double], Int) => org.apache.spark.ml.linalg.Vector = (rawFeatures, label) => {

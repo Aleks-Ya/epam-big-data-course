@@ -1,5 +1,6 @@
 package lesson4
 
+import org.apache.spark.ml.linalg.Vectors
 import org.scalatest.{FlatSpec, Matchers}
 
 class UdfFunctionsTest extends FlatSpec with Matchers {
@@ -22,5 +23,12 @@ class UdfFunctionsTest extends FlatSpec with Matchers {
     val objects = (for (i <- 101 to 151) yield i).map(n => n.toString)
     val res = UdfFunctions.categoricalObjectToCategorical(column)(objects)
     res shouldEqual 102
+  }
+
+  it should "append value of raw categorical feature to all fetures" in {
+    val vector = Vectors.dense(1d, 2d)
+    val s = Seq(3d, 4d)
+    val res = UdfFunctions.appendRawCategoricalToRawFeatures(vector, s)
+    res should contain inOrder(1, 2, 3, 4)
   }
 }

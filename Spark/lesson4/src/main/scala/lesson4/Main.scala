@@ -140,7 +140,7 @@ object Main {
 
     var result = labelObjectDf
     labelObjectDf.columns.filter(col => col.startsWith(rawCategoricalPrefix)).foreach(column => {
-      val fillCategoricalColsUdf = udf(UdfFunctions.appendRawCategoricalToRawFeatures(column))
+      val fillCategoricalColsUdf = udf(UdfFunctions.appendRawCategoricalToRawFeatures)
       result = result.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(column), col(rawFeaturesCol)))
     })
     result
