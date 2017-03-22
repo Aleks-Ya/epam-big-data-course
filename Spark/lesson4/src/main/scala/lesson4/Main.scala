@@ -15,7 +15,6 @@ object Main {
   private val labelCol = "label"
   private val objectsCol = "objects"
   private val rawFeaturesCol = "rawFeatures"
-  private val rawCategoricalCol = "rawCategorical"
   private val featuresCol = "features"
 
   private val fieldsCount = 50
@@ -95,7 +94,6 @@ object Main {
       .foreach(column => labelObjectDf = labelObjectDf.drop(col(column)))
     labelObjectDf = labelObjectDf.drop(col(objectsCol))
     labelObjectDf = labelObjectDf.drop(col(rawFeaturesCol))
-    labelObjectDf = labelObjectDf.drop(col(rawCategoricalCol))
     labelObjectDf
   }
 
@@ -145,14 +143,12 @@ object Main {
   private def appendRawCategoricalToRawFeatures(labelObjectDf1: DataFrame) = {
     log.info("Enter appendRawCategoricalToRawFeatures")
     var labelObjectDf = labelObjectDf1
-    labelObjectDf = labelObjectDf.withColumn(rawCategoricalCol, lit(Array[Int]()))
 
-    var result = labelObjectDf
     labelObjectDf.columns.filter(col => col.startsWith(rawCategoricalPrefix)).foreach(column => {
       val fillCategoricalColsUdf = udf(UdfFunctions.appendRawCategoricalToRawFeatures)
-      result = result.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(column), col(rawFeaturesCol)))
+      labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(column), col(rawFeaturesCol)))
     })
-    result
+    labelObjectDf
   }
 
   private def rawFeaturesToLabelledPoint(labelObjectDf1: DataFrame) = {
