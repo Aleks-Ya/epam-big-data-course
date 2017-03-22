@@ -4,13 +4,15 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
+import scala.io.Source
+
 object FileHelper {
   private val log = LoggerFactory.getLogger(getClass)
 
-  def readDescriptions(ss: SparkSession): String = {
+  def readDescriptions: String = {
     log.info("Enter readDescriptions")
     val path = resourceToPath("PropertyDesciptionEN.txt")
-    ss.sparkContext.textFile(path).reduce(_ + "\n" + _)
+    Source.fromFile(path).mkString
   }
 
   private def resourceToPath(resource: String) = {
