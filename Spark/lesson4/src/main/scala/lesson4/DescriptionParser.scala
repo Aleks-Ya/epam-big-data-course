@@ -4,10 +4,11 @@ import lesson4.Category.Category
 import org.slf4j.LoggerFactory
 
 //TODO remove parsing patternCategoryValue
-class DescriptionParser(content: String) {
+class DescriptionParser(content: String) extends Serializable {
   private val log = LoggerFactory.getLogger(getClass)
-//  var content: String = _
-  private val patternTitle = """^(\d+)\) (\w[,()'/\w\s]*): (\w+)$""".r
+  //  var content: String = _
+  private val patternTitle =
+    """^(\d+)\) (\w[,()'/\w\s]*): (\w+)$""".r
   private val patternCategoryValue = """^\t(\d+): ([\w\p{Punct}][\w\s\p{Punct}]*)$""".r
 
   lazy val allFields: Map[Int, Description] = parseFromString(content)
@@ -56,7 +57,8 @@ class DescriptionParser(content: String) {
   }
 }
 
-class Description(val id: Int, val title: String, val category: Category, val values: List[(Int, String)]) {}
+class Description(val id: Int, val title: String, val category: Category, val values: List[(Int, String)])
+  extends Serializable {}
 
 object Category extends Enumeration {
   type Category = Value

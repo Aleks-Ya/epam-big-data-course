@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.{udf, _}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import org.apache.spark.util.SizeEstimator
 import org.slf4j.LoggerFactory
 
 object Main {
@@ -43,7 +44,7 @@ object Main {
     labelObjectDf = addCategoricalColumns(descriptionParser, labelObjectDf)
 
 
-    labelObjectDf = numericalToRawFeatures(labelObjectDf)
+    labelObjectDf = numericalToRawFeatures(descriptionParser, labelObjectDf)
     //    labelObjectDf.cache
     //    labelObjectDf.show
 
@@ -63,11 +64,19 @@ object Main {
     //    labelObjectDf.cache
     //    labelObjectDf.show
 
+    log.info("Size before columns drop: " + SizeEstimator.estimate(labelObjectDf))
     labelObjectDf = dropUnusedColumns(labelObjectDf)
     log.info("Start to cache")
 
     labelObjectDf.cache
     labelObjectDf.explain(extended = true)
+    log.info("Size after caching: " + SizeEstimator.estimate(labelObjectDf))
+    val featureCount = labelObjectDf.select(featuresCol)
+      .first
+      .get(0)
+      .asInstanceOf[org.apache.spark.ml.linalg.Vector]
+      .size
+    log.info("Feature count: " + featureCount)
     //    labelObjectDf.show
 
     val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(labelObjectDf)
@@ -102,9 +111,9 @@ object Main {
     labelObjectDf
   }
 
-  private def numericalToRawFeatures(labelObjectDf: DataFrame) = {
+  private def numericalToRawFeatures(descriptionParser: DescriptionParser, labelObjectDf: DataFrame) = {
     log.info("Enter numericalToRawFeatures")
-    val fillNumericalColsUdf = udf(UdfFunctions.numericalToRawFeatures)
+    val fillNumericalColsUdf = udf(UdfFunctions.numericalToRawFeatures(descriptionParser))
     labelObjectDf.withColumn(rawFeaturesCol, fillNumericalColsUdf(col(objectsCol)))
   }
 
@@ -150,7 +159,7 @@ object Main {
     log.info("Enter rawFeaturesToLabelledPoint")
     var labelObjectDf = labelObjectDf1
     val udfObj = udf(UdfFunctions.rawFeaturesToVector)
-    labelObjectDf = labelObjectDf.withColumn(featuresCol, udfObj(col(rawFeaturesCol), col(labelCol)))
+    labelObjectDf = labelObjectDf.withColumn(featuresCol, udfObj(col(rawFeaturesCol)))
     labelObjectDf
   }
 

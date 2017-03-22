@@ -5,7 +5,7 @@ import org.apache.spark.ml.linalg.Vectors
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
-object UdfFunctions {
+object UdfFunctions extends Serializable {
   val numericalToRawFeatures: DescriptionParser => Seq[String] => Seq[Double] = parser => x => {
     val result = new ListBuffer[Double]()
     parser.numericFields.map({ t =>
