@@ -5,7 +5,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class UdfFunctionsTest extends FlatSpec with Matchers {
   it should "select values from all fields only numerical" in {
-    val content = FileHelper.readDescriptions(SparkHelper.ss)
+    val content = FileHelper.readDescriptions
     val parser = new DescriptionParser(content)
     val objects = (for (i <- 101 to 151) yield i).map(n => n.toString)
     val res = UdfFunctions.numericalToRawFeatures(parser)(objects)

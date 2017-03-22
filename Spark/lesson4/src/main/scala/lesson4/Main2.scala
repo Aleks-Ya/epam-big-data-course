@@ -4,23 +4,25 @@ import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.feature.OneHotEncoder
 import org.apache.spark.ml.regression.{LinearRegression, LinearRegressionModel}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{udf, _}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql._
 import org.apache.spark.util.SizeEstimator
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 
-object Main {
+object Main2 {
   private val log = LoggerFactory.getLogger(getClass)
   private val labelCol = "label"
   private val objectsCol = "objects"
-  private val rawFeaturesCol = "rawFeatures"
+  //  private val rawFeaturesCol = "rawFeatures"
   private val featuresCol = "features"
 
   private val fieldsCount = 50
 
+  private val categoricalCol = "categorical"
+  private val categoricalVectorCol = "categoricalVector"
   private val categoricalPrefix = "categorical_"
   private val rawCategoricalPrefix = "rawCategorical_"
 
@@ -29,50 +31,53 @@ object Main {
     val objectsRdd: RDD[Array[String]] = FileHelper.readObjects(ss)
     val labelsRdd: RDD[Int] = FileHelper.readLabels(ss)
     val labelObjectRdd = objectsRdd.zip(labelsRdd).map(tuple => Row(tuple._1, tuple._2))
-    var labelObjectDf: DataFrame = rddToDf(ss, labelObjectRdd)
-      .withColumn(rawFeaturesCol, array())
-
-    //    labelObjectDf.foreach(row => {
-    //      val l = row.getSeq(0).length
-    //      assert(l == fieldsCount, l + "-" + row)
-    //    })
+    var df: DataFrame = rddToDf(ss, labelObjectRdd)
+      .withColumn(featuresCol, lit(null))
+      .withColumn(categoricalCol, lit(null))
+      .withColumn(categoricalVectorCol, lit(null))
+    df.show
 
     val descriptionParser = new DescriptionParser(FileHelper.readDescriptions)
-    //    assert(DescriptionParser.allFields.size == fieldsCount)
-    //    assert(DescriptionParser.categoricalFields.size == 16)
-    //    assert(DescriptionParser.numericFields.size == 34)
+    implicit val mapEncoder = org.apache.spark.sql.Encoders.kryo[Row]
+    df = df.map(row => {
+      val objectsColInd = row.fieldIndex(objectsCol)
+      val featuresColInd = row.fieldIndex(featuresCol)
+      val features = UdfFunctions.numericalToRawFeatures(descriptionParser)(row.getSeq[String](objectsColInd))
 
-    labelObjectDf = addCategoricalColumns(descriptionParser, labelObjectDf)
+      val rowSeq = row.toSeq.toBuffer
+      rowSeq(featuresColInd) = features
+      Row(rowSeq)
+    }).toDF("objects", "label", "features", "categorical", "categoricalVector")
+    df.show
 
+    UdfFunctions.numericalToRawFeatures(descriptionParser)
+    df = numericalToRawFeatures(descriptionParser, df)
+    //    labelObjectDf.show
 
-    labelObjectDf = numericalToRawFeatures(descriptionParser, labelObjectDf)
+    df = categoricalObjectToCategorical(df)
     //    labelObjectDf.cache
     //    labelObjectDf.show
 
-    labelObjectDf = categoricalObjectToCategorical(labelObjectDf)
+    df = transformCategoricalToRawCategorical(df)
     //    labelObjectDf.cache
     //    labelObjectDf.show
 
-    labelObjectDf = transformCategoricalToRawCategorical(labelObjectDf)
+    df = appendRawCategoricalToRawFeatures(df)
     //    labelObjectDf.cache
     //    labelObjectDf.show
 
-    labelObjectDf = appendRawCategoricalToRawFeatures(labelObjectDf)
+    df = rawFeaturesToLabelledPoint(df)
     //    labelObjectDf.cache
     //    labelObjectDf.show
 
-    labelObjectDf = rawFeaturesToLabelledPoint(labelObjectDf)
-    //    labelObjectDf.cache
-    //    labelObjectDf.show
-
-    log.info("Size before columns drop: " + SizeEstimator.estimate(labelObjectDf))
-    labelObjectDf = dropUnusedColumns(labelObjectDf)
+    log.info("Size before columns drop: " + SizeEstimator.estimate(df))
+    df = dropUnusedColumns(df)
     log.info("Start to cache")
 
-    labelObjectDf.cache
-    labelObjectDf.explain(extended = true)
-    log.info("Size after caching: " + SizeEstimator.estimate(labelObjectDf))
-    val featureCount = labelObjectDf.select(featuresCol)
+    df.cache
+    df.explain(extended = true)
+    log.info("Size after caching: " + SizeEstimator.estimate(df))
+    val featureCount = df.select(featuresCol)
       .first
       .get(0)
       .asInstanceOf[org.apache.spark.ml.linalg.Vector]
@@ -80,7 +85,7 @@ object Main {
     log.info("Feature count: " + featureCount)
     //    labelObjectDf.show
 
-    val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(labelObjectDf)
+    val (trainingData: Dataset[Row], testData: Dataset[Row]) = splitInputData(df)
     //    trainingData.show(100, truncate = false)
     val model: LinearRegressionModel = fitModel(trainingData)
     printSummary(model)
@@ -95,7 +100,7 @@ object Main {
       .filter(col => col.startsWith(categoricalPrefix) || col.startsWith(rawCategoricalPrefix))
       .foreach(column => labelObjectDf = labelObjectDf.drop(col(column)))
     labelObjectDf = labelObjectDf.drop(col(objectsCol))
-    labelObjectDf = labelObjectDf.drop(col(rawFeaturesCol))
+    labelObjectDf = labelObjectDf.drop(col(featuresCol))
     labelObjectDf
   }
 
@@ -114,7 +119,7 @@ object Main {
   private def numericalToRawFeatures(descriptionParser: DescriptionParser, labelObjectDf: DataFrame) = {
     log.info("Enter numericalToRawFeatures")
     val fillNumericalColsUdf = udf(UdfFunctions.numericalToRawFeatures(descriptionParser))
-    labelObjectDf.withColumn(rawFeaturesCol, fillNumericalColsUdf(col(objectsCol)))
+    labelObjectDf.withColumn(featuresCol, fillNumericalColsUdf(col(objectsCol)))
   }
 
   private def categoricalObjectToCategorical(labelObjectDf1: DataFrame) = {
@@ -152,11 +157,10 @@ object Main {
       //      labelObjectDf.select(rawFeaturesCol).foreach(row => println(row))
       //      labelObjectDf = labelObjectDf.withColumn(rawFeaturesCol, fillCategoricalColsUdf(col(rawCategoricalColumn), col(rawFeaturesCol)))
       val sql = SparkHelper.ss.sqlContext
-      import sql.implicits._
       implicit val mapEncoder = org.apache.spark.sql.Encoders.kryo[Row]
       log.debug("labelObjectDf size: " + labelObjectDf.count())
       labelObjectDf = labelObjectDf.map(row => {
-        val rawFeaturesIndex = row.fieldIndex(rawFeaturesCol)
+        val rawFeaturesIndex = row.fieldIndex(featuresCol)
         val vectorCat = row.getAs[org.apache.spark.ml.linalg.Vector](rawCategoricalColumn)
         //        val vector = row.getAs[org.apache.spark.ml.linalg.Vector](rawFeaturesCol)
         val rawFeatures = row.getSeq[Double](rawFeaturesIndex)
@@ -165,7 +169,7 @@ object Main {
         res ++= vectorCat.toDense.toArray
         val newRowArray = row.toSeq.toBuffer
         newRowArray(rawFeaturesIndex) = res.toList
-//        RowFactory.create(newRowArray)
+        //        RowFactory.create(newRowArray)
         Row(newRowArray)
       })
     })
@@ -176,7 +180,7 @@ object Main {
     log.info("Enter rawFeaturesToLabelledPoint")
     var labelObjectDf = labelObjectDf1
     val udfObj = udf(UdfFunctions.rawFeaturesToVector)
-    labelObjectDf = labelObjectDf.withColumn(featuresCol, udfObj(col(rawFeaturesCol)))
+    labelObjectDf = labelObjectDf.withColumn(featuresCol, udfObj(col(featuresCol)))
     labelObjectDf
   }
 

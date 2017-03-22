@@ -1,16 +1,19 @@
 package lesson4
 
 import org.apache.spark.ml.linalg.Vectors
+import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 object UdfFunctions extends Serializable {
-  val numericalToRawFeatures: DescriptionParser => Seq[String] => Seq[Double] = parser => x => {
+  private val log = LoggerFactory.getLogger(getClass)
+
+  val numericalToRawFeatures: DescriptionParser => Seq[String] => Seq[Double] = parser => objects => {
     val result = new ListBuffer[Double]()
     parser.numericFields.map({ t =>
       val id = t._1.toInt - 1
-      val valueStr = x(id)
+      val valueStr = objects(id)
       var value = Try(valueStr.toDouble).getOrElse({
         //          log.warn(s"Can't parse Int: $valueStr. Use 0")
         0d
@@ -42,6 +45,8 @@ object UdfFunctions extends Serializable {
   }
 
   val appendRawCategoricalToRawFeatures: (org.apache.spark.ml.linalg.Vector, Seq[Double]) => Seq[Double] = (vector, rawFeatures) => {
+    log.debug("vector length: " + vector.size)
+    log.debug("rowFeature length: " + rawFeatures.length)
     val res = ListBuffer[Double]()
     res ++= vector.toDense.toArray
     res ++= rawFeatures
