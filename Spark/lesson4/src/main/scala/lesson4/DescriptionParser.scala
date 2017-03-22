@@ -4,9 +4,9 @@ import lesson4.Category.Category
 import org.slf4j.LoggerFactory
 
 //TODO remove parsing patternCategoryValue
-case object DescriptionParser {
+class DescriptionParser(content: String) {
   private val log = LoggerFactory.getLogger(getClass)
-  var content: String = _
+//  var content: String = _
   private val patternTitle = """^(\d+)\) (\w[,()'/\w\s]*): (\w+)$""".r
   private val patternCategoryValue = """^\t(\d+): ([\w\p{Punct}][\w\s\p{Punct}]*)$""".r
 

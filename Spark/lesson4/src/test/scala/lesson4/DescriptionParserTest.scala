@@ -8,8 +8,8 @@ class DescriptionParserTest extends FlatSpec with Matchers {
       """39) Is employed, USD: CATEGORICAL
         |	0: employed/yet-al,re<ady
         |	1: not employed""".stripMargin
-    DescriptionParser.content = content
-    val description = DescriptionParser.allFields(39)
+    val parser = new DescriptionParser(content)
+    val description = parser.allFields(39)
     description.id shouldEqual 39
     description.title shouldEqual "Is employed, USD"
     description.category shouldEqual Category.Categorical
@@ -21,14 +21,14 @@ class DescriptionParserTest extends FlatSpec with Matchers {
   }
 
 
-//  it should "parse numeric" in {
-//    val content =
-//      """48) Average amount of the delayed payment, USD: NUMERIC"""
-//    DescriptionParser.content = content
-//    val description = DescriptionParser.allFields(48)
-//    description.id shouldEqual 48
-//    description.title shouldEqual "Average amount of the delayed payment, USD"
-//    description.category shouldEqual Category.Numeric
-//    description.values should have size 0
-//  }
+  it should "parse numeric" in {
+    val content =
+      """48) Average amount of the delayed payment, USD: NUMERIC"""
+    val parser = new DescriptionParser(content)
+    val description = parser.allFields(48)
+    description.id shouldEqual 48
+    description.title shouldEqual "Average amount of the delayed payment, USD"
+    description.category shouldEqual Category.Numeric
+    description.values should have size 0
+  }
 }

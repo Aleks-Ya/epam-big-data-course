@@ -35,12 +35,12 @@ object Main {
     //      assert(l == fieldsCount, l + "-" + row)
     //    })
 
-    DescriptionParser.content = FileHelper.readDescriptions(ss)
+    val descriptionParser = new DescriptionParser(FileHelper.readDescriptions(ss))
     //    assert(DescriptionParser.allFields.size == fieldsCount)
     //    assert(DescriptionParser.categoricalFields.size == 16)
     //    assert(DescriptionParser.numericFields.size == 34)
 
-    labelObjectDf = addCategoricalColumns(labelObjectDf)
+    labelObjectDf = addCategoricalColumns(descriptionParser, labelObjectDf)
 
 
     labelObjectDf = numericalToRawFeatures(labelObjectDf)
@@ -90,10 +90,10 @@ object Main {
     labelObjectDf
   }
 
-  private def addCategoricalColumns(labelObjectDf1: DataFrame) = {
+  private def addCategoricalColumns(descriptionParser: DescriptionParser, labelObjectDf1: DataFrame) = {
     log.info("Enter addCategoricalColumns")
     var labelObjectDf = labelObjectDf1
-    DescriptionParser.categoricalFields.foreach { t =>
+    descriptionParser.categoricalFields.foreach { t =>
       val id = t._1.toInt - 1
       val colName = categoricalPrefix + id
       labelObjectDf = labelObjectDf.withColumn(colName, lit(-1))

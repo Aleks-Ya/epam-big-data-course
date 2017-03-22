@@ -6,9 +6,9 @@ import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 object UdfFunctions {
-  val numericalToRawFeatures: Seq[String] => Seq[Double] = (x) => {
+  val numericalToRawFeatures: DescriptionParser => Seq[String] => Seq[Double] = parser => x => {
     val result = new ListBuffer[Double]()
-    DescriptionParser.numericFields.map({ t =>
+    parser.numericFields.map({ t =>
       val id = t._1.toInt - 1
       val valueStr = x(id)
       var value = Try(valueStr.toDouble).getOrElse({
