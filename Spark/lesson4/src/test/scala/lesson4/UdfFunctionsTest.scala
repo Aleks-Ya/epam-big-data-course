@@ -16,4 +16,11 @@ class UdfFunctionsTest extends FlatSpec with Matchers {
       137.0, 138.0, 139.0, 140.0, 141.0, 142.0, 143.0, 144.0, 145.0, 146.0,
       147.0, 148.0, 149.0, 150.0)
   }
+
+  it should "return value of categorical field for this column" in {
+    val column = "column_2"
+    val objects = (for (i <- 101 to 151) yield i).map(n => n.toString)
+    val res = UdfFunctions.categoricalObjectToCategorical(column)(objects)
+    res shouldEqual 102
+  }
 }
