@@ -21,7 +21,7 @@ object UdfFunctions {
       }
       result += value
     })
-    result
+    result.toList
   }
 
   val categoricalObjectToCategorical: String => Seq[String] => Int = column => objects => {
