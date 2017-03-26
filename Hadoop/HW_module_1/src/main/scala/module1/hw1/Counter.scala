@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 
 class Counter(private val is: InputStream) extends Callable[IdCountMap] {
   private val log = LoggerFactory.getLogger(getClass)
-  private val threadName = Thread.currentThread().getName
+  private val threadName = Thread.currentThread().getId
   var lineProcessed = 0L
 
   override def call(): collection.mutable.Map[String, Int] = {

@@ -21,7 +21,7 @@ object Processor {
     val futures = pool.invokeAll(counters.asJava).asScala
     log.info("Counters invoked")
     val idCountMaps = futures.map(future => future.get).toList
-    log.info("Counters finished" + idCountMaps.size)
+    log.info("Counters finished " + idCountMaps.size)
     pool.shutdown()
     val joinedMap = Helper.joinMaps(idCountMaps)
     log.info("Join finished Map size=" + idCountMaps.size)

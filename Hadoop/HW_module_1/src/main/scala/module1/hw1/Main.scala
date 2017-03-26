@@ -23,7 +23,7 @@ object Main {
       .toList
 
     val top100Map = Processor.process(counters, 100)
-    println(top100Map)
+    log.info("Top 100:\n" + top100Map.mkString("\n"))
 
     log.info("Finish")
   }
