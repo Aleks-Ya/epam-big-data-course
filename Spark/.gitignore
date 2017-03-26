@@ -1,0 +1,10 @@
+target
+.project
+.classpath
+.cache-main
+.cache-tests
+.settings
+bin
+.idea
+*.log
+metastore_db
