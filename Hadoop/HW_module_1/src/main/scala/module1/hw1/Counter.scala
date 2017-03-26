@@ -13,7 +13,7 @@ class Counter(private val is: InputStream) extends Callable[Map[String, Int]] {
       line = reader.readLine
       line != null
     }) {
-      val id = Parser.parseIPinYouID(line)
+      val id = Helper.parseIPinYouID(line)
       if (idCountMap.contains(id)) {
         val count = idCountMap(id) + 1
         idCountMap += id -> count
