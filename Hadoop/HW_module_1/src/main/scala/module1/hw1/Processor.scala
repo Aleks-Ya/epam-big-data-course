@@ -9,7 +9,7 @@ import scala.collection.JavaConverters._
 
 
 object Processor {
-  type IdCountMap = Map[String, Int]
+  type IdCountMap = collection.mutable.Map[String, Int]
   type IdCount = (String, Int)
   private val log = LoggerFactory.getLogger(getClass)
 
@@ -28,6 +28,7 @@ object Processor {
     val fixedSizeList = new SortedFixedSizeList(topElements)
     joinedMap.foreach(entry => {
       fixedSizeList.add(entry)
+      joinedMap.remove(entry._1)
     })
     log.info(s"top $topElements found")
     fixedSizeList.toList
