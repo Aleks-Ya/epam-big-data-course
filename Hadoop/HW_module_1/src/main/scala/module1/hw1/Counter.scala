@@ -1,9 +1,11 @@
 package module1.hw1
 
 import java.io.{BufferedReader, InputStream, InputStreamReader}
+import java.util.concurrent.Callable
 
-object Counter {
-  def processFile(is: InputStream): Map[String, Int] = {
+class Counter(private val is: InputStream) extends Callable[Map[String, Int]] {
+
+  override def call(): Map[String, Int] = {
     val reader = new BufferedReader(new InputStreamReader(is))
     var line: String = null
     val idCountMap = scala.collection.mutable.Map[String, Int]()
@@ -21,4 +23,5 @@ object Counter {
     }
     idCountMap.toMap
   }
+
 }
