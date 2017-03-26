@@ -3,9 +3,10 @@ package module1.hw1
 import java.io.{BufferedReader, InputStream, InputStreamReader}
 import java.util.concurrent.Callable
 
+import module1.hw1.Processor.IdCountMap
 import org.slf4j.LoggerFactory
 
-class Counter(private val is: InputStream) extends Callable[Map[String, Int]] {
+class Counter(private val is: InputStream) extends Callable[IdCountMap] {
   private val log = LoggerFactory.getLogger(getClass)
   private val threadName = Thread.currentThread().getName
   var lineProcessed = 0L

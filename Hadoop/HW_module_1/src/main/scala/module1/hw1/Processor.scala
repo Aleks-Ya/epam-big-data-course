@@ -9,9 +9,11 @@ import scala.collection.JavaConverters._
 
 
 object Processor {
+  type IdCountMap = Map[String, Int]
+  type IdCount = (String, Int)
   private val log = LoggerFactory.getLogger(getClass)
 
-  def process(streams: List[InputStream], topElements: Int): Map[String, Int] = {
+  def process(streams: List[InputStream], topElements: Int): List[IdCount] = {
     val counters = streams.map(is => new Counter(is))
     log.info("Threads count: " + counters.size)
     val pool = Executors.newFixedThreadPool(counters.size)
@@ -23,10 +25,12 @@ object Processor {
     pool.shutdown()
     val joinedMap = Helper.joinMaps(idCountMaps)
     log.info("Join finished Map size=" + idCountMaps.size)
-    val sortedMap = Helper.sortMap(joinedMap)
-    log.info("Map sorted")
-    val top100Map = sortedMap.take(topElements)
-    log.info("top 100 found")
-    top100Map
+    val fixedSizeList = new SortedFixedSizeList(topElements)
+    joinedMap.foreach(entry => {
+      fixedSizeList.add(entry)
+    })
+    log.info(s"top $topElements found")
+    fixedSizeList.toList
   }
 }
+

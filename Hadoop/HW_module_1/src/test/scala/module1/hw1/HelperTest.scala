@@ -10,5 +10,11 @@ class HelperTest extends FlatSpec with Matchers {
     id shouldEqual "20130612000102824"
   }
 
+//  it should "take 3 biggest entries" in {
+//    val map = Map("a" -> 1, "b" -> 2, "c" -> 3, "d" -> 4, "e" -> 4)
+//    val top3 = Helper.takeTopN(map, 3)
+//    top3.toString shouldEqual "aaaa"
+//  }
+
 }
 

@@ -27,6 +27,6 @@ class SortedFixedSizeList(val size: Int) {
   }
 
   def toList: List[IdCount] = {
-    elements.toList
+    elements.filter(_ != null).toList
   }
 }

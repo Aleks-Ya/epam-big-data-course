@@ -9,8 +9,8 @@ object MainLocal {
 
   def main(args: Array[String]): Unit = {
     log.info("Start")
-    //    val files = new File("""c:\tmp\ipinyou\""").listFiles().map(file => new FileInputStream(file)).toList
-    val files = List(new FileInputStream("""c:\tmp\ipinyou\bid.20130612.txt"""))
+        val files = new File("""c:\tmp\ipinyou\""").listFiles().map(file => new FileInputStream(file)).toList
+//    val files = List(new FileInputStream("""c:\tmp\ipinyou\bid.20130612.txt"""))
     val top100Map = Processor.process(files, 100)
     println(top100Map)
     log.info("Finish")
