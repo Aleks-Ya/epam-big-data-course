@@ -7,16 +7,15 @@ import java.util.concurrent.locks.ReentrantLock
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 
 
 object Processor {
-  type IdCountMap = collection.mutable.Map[String, Int]
-  type IdCount = (String, Int)
+  type IdCountMap = collection.mutable.Map[Long, Int]
+  type IdCount = (Long, Int)
   private val log = LoggerFactory.getLogger(getClass)
 
   def process(streams: List[InputStream], topElements: Int, threads: Int): List[IdCount] = {
-    val joinedMap: mutable.Map[String, Int] = collection.mutable.Map[String, Int]()
+    val joinedMap = collection.mutable.Map[Long, Int]()
     val lock = new ReentrantLock()
     val counters = streams.map(is => new Counter(is, joinedMap, lock))
     log.info("Thread count: " + threads)

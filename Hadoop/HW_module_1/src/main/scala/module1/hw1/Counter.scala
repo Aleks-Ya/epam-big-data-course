@@ -19,7 +19,7 @@ class Counter(private val is: InputStream,
     log.info(s"Counter $threadName started")
     val reader = new BufferedReader(new InputStreamReader(is))
     var line: String = null
-    val idCountMap = scala.collection.mutable.Map[String, Int]()
+    val idCountMap = scala.collection.mutable.Map[Long, Int]()
     while ( {
       line = reader.readLine
       line != null

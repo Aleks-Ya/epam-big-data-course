@@ -7,10 +7,10 @@ import module1.hw1.Processor.IdCountMap
 
 object Helper {
 
-  def parseIPinYouID(line: String): String = {
+  def parseIPinYouID(line: String): Long = {
     val idStart = line.indexOf("\t") + 1
     val idEnd = line.indexOf("\t", idStart)
-    line.substring(idStart, idEnd).intern()
+    line.substring(idStart, idEnd).intern().toLong
   }
 
   def joinMap(fromMap: IdCountMap, toMap: IdCountMap, lock: Lock): Unit = {
@@ -28,7 +28,7 @@ object Helper {
     }
   }
 
-  def writeToLocalFile(top: List[(String, Int)], file: File): Unit = {
+  def writeToLocalFile(top: List[(Long, Int)], file: File): Unit = {
     val writer = new FileWriter(file)
     var n = 0
     top.foreach(t => {
