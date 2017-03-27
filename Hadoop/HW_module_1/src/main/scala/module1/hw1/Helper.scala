@@ -6,7 +6,7 @@ object Helper {
   def parseIPinYouID(line: String): String = {
     val idStart = line.indexOf("\t") + 1
     val idEnd = line.indexOf("\t", idStart)
-    line.substring(idStart, idEnd)
+    line.substring(idStart, idEnd).intern()
   }
 
   def joinTwoMaps(m1: IdCountMap, m2: IdCountMap): IdCountMap = {

@@ -17,14 +17,13 @@ object Processor {
     val counters = streams.map(is => new Counter(is))
     log.info("Threads count: " + counters.size)
     val pool = Executors.newFixedThreadPool(counters.size)
-    log.info("Invoke counters")
     val futures = pool.invokeAll(counters.asJava).asScala
     log.info("Counters invoked")
     val idCountMaps = futures.map(future => future.get).toList
-    log.info("Counters finished " + idCountMaps.size)
     pool.shutdown()
-    val joinedMap = Helper.joinMaps(idCountMaps)
-    log.info("Join finished Map size=" + idCountMaps.size)
+    log.info("Counters finished: " + idCountMaps.size)
+    val joinedMap = Helper.joinMaps(idCountMaps)//TODO join finished maps immediately
+    log.info("Join finished Map size=" + joinedMap.size)
     val fixedSizeList = new SortedFixedSizeList(topElements)
     joinedMap.foreach(entry => {
       fixedSizeList.add(entry)

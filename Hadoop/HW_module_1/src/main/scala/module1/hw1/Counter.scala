@@ -30,6 +30,7 @@ class Counter(private val is: InputStream) extends Callable[IdCountMap] {
       }
       lineProcessed += 1
     }
+    reader.close()
     log.info(s"Counter $threadName finished. Processed $lineProcessed lines. Map size ${idCountMap.size}.")
     idCountMap
   }
