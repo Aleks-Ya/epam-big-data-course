@@ -2,15 +2,19 @@ package module1.hw1
 
 import java.io.{BufferedReader, InputStream, InputStreamReader}
 import java.util.concurrent.Callable
+import java.util.concurrent.locks.Lock
 
 import module1.hw1.Processor.IdCountMap
 import org.slf4j.LoggerFactory
 
-class Counter(private val is: InputStream) extends Callable[IdCountMap] {
+class Counter(private val is: InputStream,
+              private val joinedMap: IdCountMap,
+              private val joinedMapLock: Lock)
+  extends Callable[Unit] {
   private val log = LoggerFactory.getLogger(getClass)
   var lineProcessed = 0L
 
-  override def call(): collection.mutable.Map[String, Int] = {
+  override def call(): Unit = {
     val threadName = Thread.currentThread().getName
     log.info(s"Counter $threadName started")
     val reader = new BufferedReader(new InputStreamReader(is))
@@ -31,8 +35,15 @@ class Counter(private val is: InputStream) extends Callable[IdCountMap] {
       lineProcessed += 1
     }
     reader.close()
-    log.info(s"Counter $threadName finished. Processed $lineProcessed lines. Map size ${idCountMap.size}.")
-    idCountMap
+    log.info(s"Counter $threadName finished calculating. Processed $lineProcessed lines. Map size ${idCountMap.size}.")
+    log.info(s"Counter $threadName started to join map")
+    try {
+      joinedMapLock.lock()
+      Helper.joinMap(idCountMap, joinedMap, joinedMapLock)
+    } finally {
+      joinedMapLock.unlock()
+    }
+    log.info(s"Counter $threadName joined map. Joined map size ${joinedMap.size}")
   }
 
 }
