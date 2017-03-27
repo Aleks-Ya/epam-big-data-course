@@ -13,15 +13,16 @@ object Processor {
   type IdCount = (String, Int)
   private val log = LoggerFactory.getLogger(getClass)
 
-  def process(streams: List[InputStream], topElements: Int): List[IdCount] = {
+  def process(streams: List[InputStream], topElements: Int, threads: Int): List[IdCount] = {
     val counters = streams.map(is => new Counter(is))
-    log.info("Threads count: " + counters.size)
-    val pool = Executors.newFixedThreadPool(counters.size)
+    log.info("Thread count: " + threads)
+    log.info("Counter count: " + counters.size)
+    val pool = Executors.newFixedThreadPool(threads)
     val futures = pool.invokeAll(counters.asJava).asScala
     log.info("Counters invoked")
     val idCountMaps = futures.map(future => future.get).toList
     pool.shutdown()
-    log.info("Counters finished: " + idCountMaps.size)
+    log.info("Counters finished")
     val joinedMap = Helper.joinMaps(idCountMaps)//TODO join finished maps immediately
     log.info("Join finished Map size=" + joinedMap.size)
     val fixedSizeList = new SortedFixedSizeList(topElements)

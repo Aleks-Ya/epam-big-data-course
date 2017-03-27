@@ -22,8 +22,9 @@ object Main {
       .map(path => fs.open(path))
       .toList
 
-    val top100Map = Processor.process(counters, 100)
-    log.info("Top 100:\n" + top100Map.mkString("\n"))
+    val threads = counters.size
+    val top100 = Processor.process(counters, 100, threads)
+    log.info("Top 100:\n" + top100.mkString("\n"))
 
     log.info("Finish")
   }
