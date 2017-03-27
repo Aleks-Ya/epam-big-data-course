@@ -11,19 +11,18 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     log.info("Start")
+    val url = new URI(args(0))
     val config = new Configuration()
-    val url = new URI("hdfs://sandbox.hortonworks.com:8020")
     val fs = FileSystem.get(url, config)
-    log.info("FileSystem status: " + fs.getStatus)
-    val files = args(0)
+    val files = args(1)
     val statuses = fs.globStatus(new Path(files))
-    val counters = statuses
+    val streams = statuses
       .map(status => status.getPath)
       .map(path => fs.open(path))
       .toList
 
-    val threads = counters.size
-    val top100 = Processor.process(counters, 100, threads)
+    val threads = streams.size
+    val top100 = Processor.process(streams, 100, threads)
     log.info("Top 100:\n" + top100.mkString("\n"))
 
     log.info("Finish")

@@ -13,7 +13,12 @@ lazy val root = (project in file(".")).
     parallelExecution in Test := false,
     mainClass in assembly := Some("module1.hw1.Main"),
     assemblyJarName in assembly := "iablokov_module1_hw1.jar",
-    run in Compile <<= Defaults.runTask(fullClasspath in Compile, mainClass in(Compile, run), runner in(Compile, run))
+    run in Compile <<= Defaults.runTask(fullClasspath in Compile, mainClass in(Compile, run), runner in(Compile, run)),
+    assemblyMergeStrategy in assembly := {
+      case x if x.startsWith("META-INF") => MergeStrategy.discard
+      case x if x.startsWith("""org\apache\commons""") => MergeStrategy.first
+      case _ => MergeStrategy.deduplicate
+    }
   )
 
 lazy val mainRunner = project.in(file("mainRunner")).dependsOn(RootProject(file("."))).settings(
