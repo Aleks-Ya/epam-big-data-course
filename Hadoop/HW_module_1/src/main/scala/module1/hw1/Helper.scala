@@ -1,5 +1,6 @@
 package module1.hw1
 
+import java.io.{File, FileWriter}
 import java.util.concurrent.locks.Lock
 
 import module1.hw1.Processor.IdCountMap
@@ -25,5 +26,15 @@ object Helper {
     } finally {
       lock.unlock()
     }
+  }
+
+  def writeToLocalFile(top: List[(String, Int)], file: File): Unit = {
+    val writer = new FileWriter(file)
+    var n = 0
+    top.foreach(t => {
+      n += 1
+      writer.append(s"$n ${t._1} ${t._2}\n")
+    })
+    writer.close()
   }
 }
