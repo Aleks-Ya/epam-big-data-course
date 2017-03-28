@@ -14,8 +14,8 @@ public class WordCountTest {
     @Test
     public void test() throws IOException {
         new MapReduceDriver<LongWritable, Text, Text, IntWritable, Text, IntWritable>()
-                .withReducer(new IntSumReducer())
-                .withMapper(new TokenizerMapper())
+                .withReducer(new SumReducer())
+                .withMapper(new StringToWordMapper())
                 .withInput(new LongWritable(0), new Text("a b c d a b a"))
                 .withAllOutput(
                         Arrays.asList(
