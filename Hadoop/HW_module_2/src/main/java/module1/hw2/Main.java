@@ -4,8 +4,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.chain.ChainMapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.slf4j.Logger;
@@ -20,11 +22,11 @@ public class Main {
         Configuration conf = new Configuration();
         conf.set("fs.defaultFS", "hdfs://localhost:9000");
 
-        Job job = Job.getInstance(conf, "word count");
+        Job job = Job.getInstance(conf, "The longest word");
         job.setJarByClass(Main.class);
-        job.setMapperClass(StringToWordMapper.class);
-        job.setCombinerClass(SumReducer.class);
-        job.setReducerClass(SumReducer.class);
+        ChainMapper.addMapper(job, StringToWordMapper.class, NullWritable.class, Text.class, Text.class, NullWritable.class, conf);
+        ChainMapper.addMapper(job, LongestWordCombiner.class, Text.class, NullWritable.class, Text.class, NullWritable.class, conf);
+        job.setReducerClass(LongestWordReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
 
