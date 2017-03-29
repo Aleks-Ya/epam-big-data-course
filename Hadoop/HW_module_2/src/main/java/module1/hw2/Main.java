@@ -23,11 +23,11 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         log.info("Start");
-        Configuration conf = makeConfig();
+        Configuration conf = makeConfig(args[0]);
         Job job = makeJob(conf);
-        configureInputFile(job, args[0]);
+        configureInputFile(job, args[1]);
         FileSystem fs = FileSystem.get(conf);
-        Path outputDir = configureOutputDir(job, args[1], fs);
+        Path outputDir = configureOutputDir(job, args[2], fs);
         executeJob(job);
         printResultToConsole(fs, outputDir);
         log.info("Exit");
@@ -82,9 +82,10 @@ public class Main {
         return job;
     }
 
-    private static Configuration makeConfig() {
+    private static Configuration makeConfig(String defaultFs) {
+        log.info("Default File System: \"{}\"", defaultFs);
         Configuration conf = new Configuration();
-        conf.set("fs.defaultFS", "hdfs://localhost:9000");
+        conf.set("fs.defaultFS", defaultFs);
         return conf;
     }
 }
