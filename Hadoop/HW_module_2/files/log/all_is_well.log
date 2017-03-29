@@ -1,0 +1,121 @@
+aleks@aleks-pc ~/pr/home/iablokov-hw/Hadoop/HW_module_2 $ java -jar target/LongestWord-jar-with-dependencies.jar hdfs://localhost:9000 /tmp/longest_word/All_Is_Well.txt /tmp/longest_word/results
+17/03/30 00:16:29 INFO Main: Start
+17/03/30 00:16:29 INFO Main: Default File System: "hdfs://localhost:9000"
+17/03/30 00:16:30 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+17/03/30 00:16:30 INFO Main: Input file: /tmp/longest_word/All_Is_Well.txt
+17/03/30 00:16:30 INFO Main: Output dir: /tmp/longest_word/results
+17/03/30 00:16:30 INFO Main: Output dir exists. Delete it: true
+17/03/30 00:16:30 INFO Main: Run job
+17/03/30 00:16:30 INFO deprecation: session.id is deprecated. Instead, use dfs.metrics.session-id
+17/03/30 00:16:30 INFO JvmMetrics: Initializing JVM Metrics with processName=JobTracker, sessionId=
+17/03/30 00:16:30 WARN JobResourceUploader: Hadoop command-line option parsing not performed. Implement the Tool interface and execute your application with ToolRunner to remedy this.
+17/03/30 00:16:30 INFO FileInputFormat: Total input files to process : 1
+17/03/30 00:16:30 INFO JobSubmitter: number of splits:1
+17/03/30 00:16:30 INFO JobSubmitter: Submitting tokens for job: job_local479040152_0001
+17/03/30 00:16:30 INFO Job: The url to track the job: http://localhost:8080/
+17/03/30 00:16:30 INFO Job: Running job: job_local479040152_0001
+17/03/30 00:16:30 INFO LocalJobRunner: OutputCommitter set in config null
+17/03/30 00:16:30 INFO FileOutputCommitter: File Output Committer Algorithm version is 1
+17/03/30 00:16:30 INFO FileOutputCommitter: FileOutputCommitter skip cleanup _temporary folders under output directory:false, ignore cleanup failures: false
+17/03/30 00:16:30 INFO LocalJobRunner: OutputCommitter is org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter
+17/03/30 00:16:30 INFO LocalJobRunner: Waiting for map tasks
+17/03/30 00:16:30 INFO LocalJobRunner: Starting task: attempt_local479040152_0001_m_000000_0
+17/03/30 00:16:30 INFO FileOutputCommitter: File Output Committer Algorithm version is 1
+17/03/30 00:16:30 INFO FileOutputCommitter: FileOutputCommitter skip cleanup _temporary folders under output directory:false, ignore cleanup failures: false
+17/03/30 00:16:30 INFO Task:  Using ResourceCalculatorProcessTree : [ ]
+17/03/30 00:16:30 INFO MapTask: Processing split: hdfs://localhost:9000/tmp/longest_word/All_Is_Well.txt:0+90915
+17/03/30 00:16:30 INFO MapTask: (EQUATOR) 0 kvi 26214396(104857584)
+17/03/30 00:16:30 INFO MapTask: mapreduce.task.io.sort.mb: 100
+17/03/30 00:16:30 INFO MapTask: soft limit at 83886080
+17/03/30 00:16:30 INFO MapTask: bufstart = 0; bufvoid = 104857600
+17/03/30 00:16:30 INFO MapTask: kvstart = 26214396; length = 6553600
+17/03/30 00:16:30 INFO MapTask: Map output collector class = org.apache.hadoop.mapred.MapTask$MapOutputBuffer
+17/03/30 00:16:31 INFO LocalJobRunner:
+17/03/30 00:16:31 INFO MapTask: Starting flush of map output
+17/03/30 00:16:31 INFO MapTask: Spilling map output
+17/03/30 00:16:31 INFO MapTask: bufstart = 0; bufend = 90797; bufvoid = 104857600
+17/03/30 00:16:31 INFO MapTask: kvstart = 26214396(104857584); kvend = 26132876(104531504); length = 81521/6553600
+17/03/30 00:16:31 INFO MapTask: Finished spill 0
+17/03/30 00:16:31 INFO Task: Task:attempt_local479040152_0001_m_000000_0 is done. And is in the process of committing
+17/03/30 00:16:31 INFO LocalJobRunner: map
+17/03/30 00:16:31 INFO Task: Task 'attempt_local479040152_0001_m_000000_0' done.
+17/03/30 00:16:31 INFO LocalJobRunner: Finishing task: attempt_local479040152_0001_m_000000_0
+17/03/30 00:16:31 INFO LocalJobRunner: map task executor complete.
+17/03/30 00:16:31 INFO LocalJobRunner: Waiting for reduce tasks
+17/03/30 00:16:31 INFO LocalJobRunner: Starting task: attempt_local479040152_0001_r_000000_0
+17/03/30 00:16:31 INFO FileOutputCommitter: File Output Committer Algorithm version is 1
+17/03/30 00:16:31 INFO FileOutputCommitter: FileOutputCommitter skip cleanup _temporary folders under output directory:false, ignore cleanup failures: false
+17/03/30 00:16:31 INFO Task:  Using ResourceCalculatorProcessTree : [ ]
+17/03/30 00:16:31 INFO ReduceTask: Using ShuffleConsumerPlugin: org.apache.hadoop.mapreduce.task.reduce.Shuffle@16955ca5
+17/03/30 00:16:31 INFO MergeManagerImpl: MergerManager: memoryLimit=2599472384, maxSingleShuffleLimit=649868096, mergeThreshold=1715651840, ioSortFactor=10, memToMemMergeOutputsThreshold=10
+17/03/30 00:16:31 INFO EventFetcher: attempt_local479040152_0001_r_000000_0 Thread started: EventFetcher for fetching Map Completion Events
+17/03/30 00:16:31 INFO LocalFetcher: localfetcher#1 about to shuffle output of map attempt_local479040152_0001_m_000000_0 decomp: 39 len: 43 to MEMORY
+17/03/30 00:16:31 INFO InMemoryMapOutput: Read 39 bytes from map-output for attempt_local479040152_0001_m_000000_0
+17/03/30 00:16:31 INFO MergeManagerImpl: closeInMemoryFile -> map-output of size: 39, inMemoryMapOutputs.size() -> 1, commitMemory -> 0, usedMemory ->39
+17/03/30 00:16:31 INFO EventFetcher: EventFetcher is interrupted.. Returning
+17/03/30 00:16:31 INFO LocalJobRunner: 1 / 1 copied.
+17/03/30 00:16:31 INFO MergeManagerImpl: finalMerge called with 1 in-memory map-outputs and 0 on-disk map-outputs
+17/03/30 00:16:31 INFO Merger: Merging 1 sorted segments
+17/03/30 00:16:31 INFO Merger: Down to the last merge-pass, with 1 segments left of total size: 2 bytes
+17/03/30 00:16:31 INFO MergeManagerImpl: Merged 1 segments, 39 bytes to disk to satisfy reduce memory limit
+17/03/30 00:16:31 INFO MergeManagerImpl: Merging 1 files, 43 bytes from disk
+17/03/30 00:16:31 INFO MergeManagerImpl: Merging 0 segments, 0 bytes from memory into reduce
+17/03/30 00:16:31 INFO Merger: Merging 1 sorted segments
+17/03/30 00:16:31 INFO Merger: Down to the last merge-pass, with 1 segments left of total size: 2 bytes
+17/03/30 00:16:31 INFO LocalJobRunner: 1 / 1 copied.
+17/03/30 00:16:31 INFO deprecation: mapred.skip.on is deprecated. Instead, use mapreduce.job.skiprecords
+17/03/30 00:16:31 INFO Task: Task:attempt_local479040152_0001_r_000000_0 is done. And is in the process of committing
+17/03/30 00:16:31 INFO LocalJobRunner: 1 / 1 copied.
+17/03/30 00:16:31 INFO Task: Task attempt_local479040152_0001_r_000000_0 is allowed to commit now
+17/03/30 00:16:31 INFO FileOutputCommitter: Saved output of task 'attempt_local479040152_0001_r_000000_0' to hdfs://localhost:9000/tmp/longest_word/results/_temporary/0/task_local479040152_0001_r_000000
+17/03/30 00:16:31 INFO LocalJobRunner: reduce > reduce
+17/03/30 00:16:31 INFO Task: Task 'attempt_local479040152_0001_r_000000_0' done.
+17/03/30 00:16:31 INFO LocalJobRunner: Finishing task: attempt_local479040152_0001_r_000000_0
+17/03/30 00:16:31 INFO LocalJobRunner: reduce task executor complete.
+17/03/30 00:16:31 INFO Job: Job job_local479040152_0001 running in uber mode : false
+17/03/30 00:16:31 INFO Job:  map 100% reduce 100%
+17/03/30 00:16:31 INFO Job: Job job_local479040152_0001 completed successfully
+17/03/30 00:16:31 INFO Job: Counters: 35
+        File System Counters
+                FILE: Number of bytes read=77347126
+                FILE: Number of bytes written=78589617
+                FILE: Number of read operations=0
+                FILE: Number of large read operations=0
+                FILE: Number of write operations=0
+                HDFS: Number of bytes read=181830
+                HDFS: Number of bytes written=35
+                HDFS: Number of read operations=15
+                HDFS: Number of large read operations=0
+                HDFS: Number of write operations=6
+        Map-Reduce Framework
+                Map input records=4755
+                Map output records=20381
+                Map output bytes=90797
+                Map output materialized bytes=43
+                Input split bytes=119
+                Combine input records=20381
+                Combine output records=1
+                Reduce input groups=1
+                Reduce shuffle bytes=43
+                Reduce input records=1
+                Reduce output records=1
+                Spilled Records=2
+                Shuffled Maps =1
+                Failed Shuffles=0
+                Merged Map outputs=1
+                GC time elapsed (ms)=0
+                Total committed heap usage (bytes)=710934528
+        Shuffle Errors
+                BAD_ID=0
+                CONNECTION=0
+                IO_ERROR=0
+                WRONG_LENGTH=0
+                WRONG_MAP=0
+                WRONG_REDUCE=0
+        File Input Format Counters
+                Bytes Read=90915
+        File Output Format Counters
+                Bytes Written=35
+17/03/30 00:16:31 INFO Main: Job finished
+17/03/30 00:16:31 INFO Main: THE LONGEST WORD: But--they--will--not--come--alone!
+17/03/30 00:16:31 INFO Main: Exit
