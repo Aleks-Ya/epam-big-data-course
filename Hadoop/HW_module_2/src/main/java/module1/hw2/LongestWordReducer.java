@@ -10,7 +10,7 @@ public class LongestWordReducer extends Reducer<Text, NullWritable, Text, NullWr
     private String longestWord = "";
 
     @Override
-    public void reduce(Text key, Iterable<NullWritable> values, Context context) throws IOException, InterruptedException {
+    public void reduce(Text key, Iterable<NullWritable> values, Context context) throws IOException {
         if (key.getLength() > longestWord.length()) {
             longestWord = key.toString();
         }

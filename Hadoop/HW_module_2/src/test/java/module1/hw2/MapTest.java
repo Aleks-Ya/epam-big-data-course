@@ -10,7 +10,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class StringToWordMapperTest {
+public class MapTest {
     @Test
     public void test() throws IOException {
         new MapDriver<LongWritable, Text, Text, NullWritable>()

@@ -5,11 +5,9 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.chain.ChainMapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.slf4j.Logger;
@@ -76,11 +74,11 @@ public class Main {
     private static Job makeJob(Configuration conf) throws IOException {
         Job job = Job.getInstance(conf, "The longest word");
         job.setJarByClass(Main.class);
-        ChainMapper.addMapper(job, StringToWordMapper.class, NullWritable.class, Text.class, Text.class, NullWritable.class, conf);
-        ChainMapper.addMapper(job, LongestWordCombiner.class, Text.class, NullWritable.class, Text.class, NullWritable.class, conf);
+        job.setMapperClass(StringToWordMapper.class);
+        job.setCombinerClass(LongestWordReducer.class);
         job.setReducerClass(LongestWordReducer.class);
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(IntWritable.class);
+        job.setOutputValueClass(NullWritable.class);
         return job;
     }
 

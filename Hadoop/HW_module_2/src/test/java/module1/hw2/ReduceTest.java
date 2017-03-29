@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 import static java.util.Collections.singletonList;
 
-public class LongestWordReducerTest {
+public class ReduceTest {
     @Test
     public void test() throws IOException {
         new ReduceDriver<Text, NullWritable, Text, NullWritable>()
