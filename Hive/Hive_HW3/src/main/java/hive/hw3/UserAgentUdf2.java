@@ -4,36 +4,44 @@ import eu.bitwalker.useragentutils.UserAgent;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
+import org.apache.hadoop.hive.serde2.lazy.LazyString;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardStructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory.javaStringObjectInspector;
 
 public class UserAgentUdf2 extends GenericUDF {
+    private static final Logger LOG = LoggerFactory.getLogger(UserAgentUdf2.class);
     static final String browserFieldName = "browser";
     static final String browserVersionFieldName = "browser_version";
     static final String osFieldName = "os";
 
     @Override
     public StandardStructObjectInspector initialize(ObjectInspector[] objectInspectors) throws UDFArgumentException {
+        LOG.error("Initialize: " + getClass());
         return createObjectInspector();
     }
 
     @Override
     public Object evaluate(DeferredObject[] objects) throws HiveException {
+        LOG.error("Evaluate: " + Arrays.deepToString(objects));
         if (objects == null) {
             return null;
         }
         if (objects.length != 1) {
             throw new IllegalArgumentException("Expected 1 argument, but found " + objects.length);
         }
-        String text = (String) objects[0].get();
+        LazyString lazyText = (LazyString) objects[0].get();
+        String text = lazyText.getWritableObject().toString();
         if (text == null) {
             return null;
         }
@@ -54,6 +62,7 @@ public class UserAgentUdf2 extends GenericUDF {
         oi.setStructFieldData(resObject, browserVersionField, browserVersionData);
         oi.setStructFieldData(resObject, osField, osData);
 
+        LOG.error("Evaluated object: " + resObject);
         return resObject;
     }
 
