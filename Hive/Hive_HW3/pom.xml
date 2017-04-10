@@ -56,11 +56,6 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <!--                    <archive>
-                                            <manifest>
-                                                <mainClass>module1.hw2.Main</mainClass>
-                                            </manifest>
-                                        </archive>-->
                 </configuration>
                 <executions>
                     <execution>
