@@ -2,15 +2,22 @@ package hive.hw3;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
+import org.apache.hadoop.hive.serde2.lazy.LazyString;
+import org.apache.hadoop.hive.serde2.lazy.objectinspector.LazyObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.lazy.objectinspector.primitive.LazyPrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.lazy.objectinspector.primitive.LazyStringObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardStructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
+@Ignore
 public class UserAgentUdf2Test {
 
     @Test
@@ -25,12 +32,25 @@ public class UserAgentUdf2Test {
                 "FIREFOX24", "WINDOWS_XP", "24.0");
     }
 
+    @Test
+    public void chrome() throws HiveException {
+        testUserAgent(" Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/21.0.1180.89 Safari/537.1 ",
+                "CHROME21", "WINDOWS_XP", "21.0.1180.89");
+    }
+
     private void testUserAgent(String userAgent, String expBrowser, String expOs, String expBrowserVersion) throws HiveException {
         UserAgentUdf2 agent2 = new UserAgentUdf2();
         StandardStructObjectInspector resultOI = agent2.initialize(
                 new ObjectInspector[]{PrimitiveObjectInspectorFactory.javaStringObjectInspector});
 
-        GenericUDF.DeferredJavaObject object = new GenericUDF.DeferredJavaObject(userAgent);
+//        LazyObjectInspectorFactory.
+        LazyStringObjectInspector argIO = LazyPrimitiveObjectInspectorFactory.getLazyStringObjectInspector(false, (byte) ' ');
+
+
+        LazyString lazyUserAgent = new LazyString(argIO);
+        byte[] userAgentBytes = userAgent.getBytes();
+//        lazyUserAgent.init(userAgentBytes, 0, userAgentBytes.length - 1);
+        GenericUDF.DeferredJavaObject object = new GenericUDF.DeferredJavaObject(lazyUserAgent);
 
         Object result = agent2.evaluate(new GenericUDF.DeferredObject[]{object});
 
