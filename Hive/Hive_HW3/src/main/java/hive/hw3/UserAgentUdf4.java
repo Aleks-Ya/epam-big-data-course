@@ -21,7 +21,7 @@ import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveO
 public class UserAgentUdf4 extends GenericUDTF {
     private static final Logger LOG = LoggerFactory.getLogger(UserAgentUdf4.class);
     static final String browserFieldName = "browser";
-    static final String browserVersionFieldName = "browser_version";
+    static final String deviceFieldName = "device";
     static final String osFieldName = "os";
 
     @Override
@@ -45,10 +45,10 @@ public class UserAgentUdf4 extends GenericUDTF {
 
         UserAgent agent = UserAgent.parseUserAgentString(userAgent);
         String browserData = agent.getBrowser().toString();
-        String browserVersionData = agent.getBrowserVersion() != null ? agent.getBrowserVersion().toString() : "";
         String osData = agent.getOperatingSystem().toString();
+        String deviceData = agent.getOperatingSystem().getDeviceType().toString();
 
-        forward(new Object[]{browserData, browserVersionData, osData});
+        forward(new Object[]{browserData, deviceData, osData});
     }
 
     @Override
@@ -59,7 +59,7 @@ public class UserAgentUdf4 extends GenericUDTF {
     private StandardStructObjectInspector createObjectInspector() {
         List<String> fieldNames = new ArrayList<>();
         fieldNames.add(browserFieldName);
-        fieldNames.add(browserVersionFieldName);
+        fieldNames.add(deviceFieldName);
         fieldNames.add(osFieldName);
 
         List<ObjectInspector> fieldOIs = Collections.nCopies(3, javaStringObjectInspector);
