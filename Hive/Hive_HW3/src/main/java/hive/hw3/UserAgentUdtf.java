@@ -7,6 +7,7 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDTF;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardStructObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import static org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveO
 public class UserAgentUdtf extends GenericUDTF {
 
     @Override
-    public StandardStructObjectInspector initialize(ObjectInspector[] objectInspectors) throws UDFArgumentException {
+    public StructObjectInspector initialize(StructObjectInspector objectInspectors) throws UDFArgumentException {
         return createObjectInspector();
     }
 
@@ -28,6 +29,10 @@ public class UserAgentUdtf extends GenericUDTF {
         if (objects == null) {
             return;
         }
+        forward(processRow(objects));
+    }
+
+    String[] processRow(Object[] objects) {
         if (objects.length != 1) {
             throw new IllegalArgumentException("Expected 1 argument, but found " + objects.length);
         }
@@ -38,14 +43,14 @@ public class UserAgentUdtf extends GenericUDTF {
         String osData = agent.getOperatingSystem().toString();
         String deviceData = agent.getOperatingSystem().getDeviceType().toString();
 
-        forward(new Object[]{browserData, deviceData, osData});
+        return new String[]{browserData, deviceData, osData};
     }
 
     @Override
     public void close() throws HiveException {
     }
 
-    private StandardStructObjectInspector createObjectInspector() {
+    private static StandardStructObjectInspector createObjectInspector() {
         List<String> fieldNames = new ArrayList<>();
         fieldNames.add("browser");
         fieldNames.add("device");
